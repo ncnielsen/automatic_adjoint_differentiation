@@ -7,12 +7,6 @@ pub mod automatic_differentiator;
 pub mod number;
 
 fn main() {
-    let rt = tokio::runtime::Builder::new_multi_thread()
-        //.worker_threads(8) ... defaults to number of CPUs in the system.
-        .enable_all()
-        .build()
-        .unwrap();
-
     let automatic_differentiator = AutomaticDifferentiator::new();
 
     let arguments = vec![

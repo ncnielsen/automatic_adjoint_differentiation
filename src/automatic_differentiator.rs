@@ -1,7 +1,4 @@
-use crate::{
-    number::{self, Number},
-    operation::Operation,
-};
+use crate::{number::Number, operation::Operation};
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;

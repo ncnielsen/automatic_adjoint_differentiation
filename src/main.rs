@@ -4,6 +4,12 @@ pub mod automatic_differentiator;
 pub mod number;
 pub mod operation;
 
+fn f(args: Vec<Number>) -> Number {
+    let y1 = args[2] * (Number::new(5.0) * args[0] + args[1]);
+    let y2 = y1.log();
+    let y = (y1 + args[3] * y2) * (y1 + y2);
+    y
+}
 fn main() {
     let automatic_differentiator = AutomaticDifferentiator::new();
 
@@ -32,11 +38,4 @@ fn main() {
     for x in reverse {
         println!("{:?}", x);
     }
-}
-
-fn f(args: Vec<Number>) -> Number {
-    let y1 = args[2] * (Number::new(5.0) * args[0] + args[1]);
-    let y2 = y1.log();
-    let y = (y1 + args[3] * y2) * (y1 + y2);
-    y
 }

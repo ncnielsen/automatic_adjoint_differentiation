@@ -1,10 +1,8 @@
-use crate::{
-    automatic_differentiator::AutomaticDifferentiator,
-    number::{Number, OperationRich},
-};
+use crate::{automatic_differentiator::AutomaticDifferentiator, number::Number};
 
 pub mod automatic_differentiator;
 pub mod number;
+pub mod operation;
 
 fn main() {
     let automatic_differentiator = AutomaticDifferentiator::new();
@@ -18,7 +16,22 @@ fn main() {
     ];
 
     let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
-    println!("Forward evaluated result: {:?}", forward_eval);
+    // Access RECORD through a safe API to avoid static mutable reference issues
+
+    println!("Result in forward order:");
+    let record = automatic_differentiator::get_record();
+    for x in automatic_differentiator::get_record() {
+        //println!("{:?}", x);
+    }
+
+    let backward_prop = automatic_differentiator.backward_propagate();
+
+    println!("Result in reverse order after back propagation:");
+
+    let reverse = record.into_iter().rev();
+    for x in reverse {
+        println!("{:?}", x);
+    }
 }
 
 fn f(args: Vec<Number>) -> Number {

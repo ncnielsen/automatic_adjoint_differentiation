@@ -1,4 +1,7 @@
-use crate::{number::Number, operation::Operation};
+use crate::{
+    number::Number,
+    operation::{AdjointUpdate, Operation},
+};
 
 use once_cell::sync::Lazy;
 use ordered_hash_map::OrderedHashMap;
@@ -27,6 +30,18 @@ pub fn add_parent_relationship(child: Uuid, parents: Vec<Uuid>) {
     let mut parent_map = PARENTMAP.lock().unwrap();
     if !parent_map.contains_key(&child) {
         parent_map.insert(child, parents);
+    }
+}
+
+pub fn OLDupdate_adjoint(uuid: Uuid, adjoint_value: f64) {
+    let mut record = RECORD.lock().unwrap();
+    if let Some(rec) = record.get_mut(&uuid) {
+        match rec {
+            Operation::Add(_, _, _, result) => result.adjoint = adjoint_value,
+            Operation::Mul(_, _, _, result) => result.adjoint = adjoint_value,
+            Operation::Log(_, _, result) => result.adjoint = adjoint_value,
+            Operation::Value(_, value) => value.adjoint = adjoint_value,
+        }
     }
 }
 
@@ -62,18 +77,37 @@ impl AutomaticDifferentiator {
             let last_id = last.0;
 
             let mut record = RECORD.lock().unwrap();
-            if let Some(entry) = record.get(last_id) {
-                match *entry {
-                    Operation::Add(_, _, _, mut result) => result.adjoint = 1.0,
-                    Operation::Mul(_, _, _, mut result) => result.adjoint = 1.0,
-                    Operation::Log(_, _, mut result) => result.adjoint = 1.0,
-                    Operation::Value(_, mut value) => value.adjoint = 1.0,
+
+            if let Some(rec) = record.get_mut(last_id) {
+                match rec {
+                    Operation::Add(_, _, _, result) => result.adjoint = 1.0,
+                    Operation::Mul(_, _, _, result) => result.adjoint = 1.0,
+                    Operation::Log(_, _, result) => result.adjoint = 1.0,
+                    Operation::Value(_, value) => value.adjoint = 1.0,
                 }
             }
 
             for op in parent_map.iter().rev() {
                 if let Some(entry) = record.get_mut(op.0) {
-                    entry.backward_propagate(op.1.clone());
+                    let adjoint_updates = entry.backward_propagate(op.1.clone());
+                    for adjoint_update in adjoint_updates {
+                        if let Some(rec) = record.get_mut(&adjoint_update.operation_uuid) {
+                            match rec {
+                                Operation::Add(_, _, _, result) => {
+                                    result.adjoint = adjoint_update.updated_adjoint
+                                }
+                                Operation::Mul(_, _, _, result) => {
+                                    result.adjoint = adjoint_update.updated_adjoint
+                                }
+                                Operation::Log(_, _, result) => {
+                                    result.adjoint = adjoint_update.updated_adjoint
+                                }
+                                Operation::Value(_, value) => {
+                                    value.adjoint = adjoint_update.updated_adjoint
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

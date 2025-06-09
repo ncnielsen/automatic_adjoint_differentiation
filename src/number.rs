@@ -12,6 +12,7 @@ pub struct Number {
     pub result: f64,
     pub adjoint: f64,
     pub is_leaf: bool,
+    pub uuid: Uuid,
 }
 
 impl Number {
@@ -20,6 +21,7 @@ impl Number {
             result: val,
             adjoint: 0.0,
             is_leaf: true,
+            uuid: Uuid::nil(),
         }
     }
 
@@ -28,6 +30,7 @@ impl Number {
             result: val,
             adjoint: 0.0,
             is_leaf: false,
+            uuid: Uuid::nil(),
         }
     }
 }
@@ -35,17 +38,27 @@ impl Number {
 impl Add for Number {
     type Output = Number;
 
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(mut self, mut rhs: Self) -> Self::Output {
+        let uuid: Uuid = Uuid::new_v4();
+        self.uuid = uuid;
+
         let mut parent_keys: Vec<Uuid> = Vec::new();
 
         if let Some(lhs_operation) = self.add_value_operation(self) {
             parent_keys.push(*lhs_operation.get_id());
+            self.uuid = *lhs_operation.get_id();
         }
         if let Some(rhs_operation) = self.add_value_operation(rhs) {
             parent_keys.push(*rhs_operation.get_id());
+            rhs.uuid = *rhs_operation.get_id();
+        }
+        if !self.is_leaf {
+            parent_keys.push(self.uuid);
+        }
+        if !rhs.is_leaf {
+            parent_keys.push(rhs.uuid);
         }
 
-        let uuid: Uuid = Uuid::new_v4();
         let result = Number::new_non_leaf(self.result + rhs.result);
         let operation = Operation::Add(uuid, self, rhs, result);
         automatic_differentiator::add_record(operation);
@@ -58,17 +71,27 @@ impl Add for Number {
 impl Mul for Number {
     type Output = Number;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(mut self, mut rhs: Self) -> Self::Output {
+        let uuid: Uuid = Uuid::new_v4();
+        self.uuid = uuid;
+
         let mut parent_keys: Vec<Uuid> = Vec::new();
 
         if let Some(lhs_operation) = self.add_value_operation(self) {
             parent_keys.push(*lhs_operation.get_id());
+            self.uuid = *lhs_operation.get_id();
         }
         if let Some(rhs_operation) = self.add_value_operation(rhs) {
             parent_keys.push(*rhs_operation.get_id());
+            rhs.uuid = *rhs_operation.get_id();
+        }
+        if !self.is_leaf {
+            parent_keys.push(self.uuid);
+        }
+        if !rhs.is_leaf {
+            parent_keys.push(rhs.uuid);
         }
 
-        let uuid: Uuid = Uuid::new_v4();
         let result = Number::new_non_leaf(self.result * rhs.result);
         let operation = Operation::Mul(uuid, self, rhs, result);
         automatic_differentiator::add_record(operation);
@@ -78,14 +101,21 @@ impl Mul for Number {
 }
 
 impl Number {
-    pub fn log(self) -> Number {
+    pub fn log(mut self) -> Number {
+        let uuid: Uuid = Uuid::new_v4();
+        self.uuid = uuid;
+
         let mut parent_keys: Vec<Uuid> = Vec::new();
 
-        if let Some(lhs_operation) = self.add_value_operation(self) {
-            parent_keys.push(*lhs_operation.get_id());
+        if let Some(arg_operation) = self.add_value_operation(self) {
+            parent_keys.push(*arg_operation.get_id());
+            self.uuid = *arg_operation.get_id();
         }
 
-        let uuid: Uuid = Uuid::new_v4();
+        if !self.is_leaf {
+            parent_keys.push(self.uuid);
+        }
+
         let result = Number::new_non_leaf(self.result.ln());
         let operation = Operation::Log(uuid, self, result);
         automatic_differentiator::add_record(operation);
@@ -95,9 +125,10 @@ impl Number {
 }
 
 impl Number {
-    fn add_value_operation(&self, number: Number) -> Option<Operation> {
+    fn add_value_operation(&mut self, number: Number) -> Option<Operation> {
         if number.is_leaf {
             let uuid: Uuid = Uuid::new_v4();
+            self.uuid = uuid;
             let operation = Operation::Value(uuid, number);
             automatic_differentiator::add_record(operation.clone());
             return Some(operation);

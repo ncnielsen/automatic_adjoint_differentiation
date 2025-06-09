@@ -9,11 +9,11 @@ pub enum Operation {
     Add(Uuid, Number, Number, Number), // Id, arg, arg, result
     Mul(Uuid, Number, Number, Number), // Id, arg, arg, result
     Log(Uuid, Number, Number),         // Id, arg, result
-    Value(Uuid, Number),               // Id, result (these are leafs)
+    Value(Uuid, Number),               // Id, result. Values are always leafs
 }
 
 impl Operation {
-    pub fn backward_propagate(&mut self) {
+    pub fn backward_propagate(&mut self, parents: Vec<Uuid>) {
         match self {
             Operation::Add(id, lhs, rhs, result) => {
                 lhs.adjoint += result.adjoint;
@@ -27,6 +27,17 @@ impl Operation {
                 arg.adjoint += result.adjoint / arg.result;
             }
             Operation::Value(id, value) => (),
+        }
+    }
+}
+
+impl Operation {
+    pub fn get_id(&self) -> &Uuid {
+        match self {
+            Operation::Add(id, ..) => id,
+            Operation::Mul(id, ..) => id,
+            Operation::Log(id, ..) => id,
+            Operation::Value(id, ..) => id,
         }
     }
 }

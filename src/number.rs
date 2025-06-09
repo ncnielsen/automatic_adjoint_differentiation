@@ -1,13 +1,11 @@
-use core::num;
+use std::fmt;
 use std::fmt::Display;
 use std::ops::Add;
 use std::ops::Mul;
-
 use uuid::Uuid;
 
 use crate::automatic_differentiator;
 use crate::operation::Operation;
-use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Number {
@@ -38,13 +36,20 @@ impl Add for Number {
     type Output = Number;
 
     fn add(self, rhs: Self) -> Self::Output {
-        self.add_value_operation(self);
-        self.add_value_operation(rhs);
+        let mut parent_keys: Vec<Uuid> = Vec::new();
+
+        if let Some(lhs_operation) = self.add_value_operation(self) {
+            parent_keys.push(*lhs_operation.get_id());
+        }
+        if let Some(rhs_operation) = self.add_value_operation(rhs) {
+            parent_keys.push(*rhs_operation.get_id());
+        }
 
         let uuid: Uuid = Uuid::new_v4();
         let result = Number::new_non_leaf(self.result + rhs.result);
         let operation = Operation::Add(uuid, self, rhs, result);
         automatic_differentiator::add_record(operation);
+        automatic_differentiator::add_parent_relationship(uuid, parent_keys);
 
         result
     }
@@ -54,25 +59,37 @@ impl Mul for Number {
     type Output = Number;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self.add_value_operation(self);
-        self.add_value_operation(rhs);
+        let mut parent_keys: Vec<Uuid> = Vec::new();
+
+        if let Some(lhs_operation) = self.add_value_operation(self) {
+            parent_keys.push(*lhs_operation.get_id());
+        }
+        if let Some(rhs_operation) = self.add_value_operation(rhs) {
+            parent_keys.push(*rhs_operation.get_id());
+        }
 
         let uuid: Uuid = Uuid::new_v4();
         let result = Number::new_non_leaf(self.result * rhs.result);
         let operation = Operation::Mul(uuid, self, rhs, result);
         automatic_differentiator::add_record(operation);
+        automatic_differentiator::add_parent_relationship(uuid, parent_keys);
         result
     }
 }
 
 impl Number {
     pub fn log(self) -> Number {
-        self.add_value_operation(self);
+        let mut parent_keys: Vec<Uuid> = Vec::new();
+
+        if let Some(lhs_operation) = self.add_value_operation(self) {
+            parent_keys.push(*lhs_operation.get_id());
+        }
 
         let uuid: Uuid = Uuid::new_v4();
         let result = Number::new_non_leaf(self.result.ln());
         let operation = Operation::Log(uuid, self, result);
         automatic_differentiator::add_record(operation);
+        automatic_differentiator::add_parent_relationship(uuid, parent_keys);
         result
     }
 }

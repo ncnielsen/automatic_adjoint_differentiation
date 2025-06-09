@@ -23,19 +23,22 @@ fn main() {
 
     let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
-    println!("Result in forward order:");
-    for _x in automatic_differentiator::get_record_collection() {
-        //println!("{:?}", x);
-    }
+    println!("printing parent map after forward evaluation");
+    automatic_differentiator::print_parent_map();
 
     let _backward_prop = automatic_differentiator.backward_propagate();
 
-    println!("Result in reverse order after back propagation:");
+    println!("Printing parent map after back propagation");
+    automatic_differentiator::print_parent_map();
 
-    let reverse = automatic_differentiator::get_record_collection()
-        .into_iter()
-        .rev();
-    for x in reverse {
-        println!("{}", x);
+    /*
+    for _x in automatic_differentiator::get_record_collection() {
+        println!("{:?}", x);
     }
+
+    let reverse = automatic_differentiator::get_record_collection();
+    for x in reverse {
+        println!("{}", x.1);
+    }
+    */
 }

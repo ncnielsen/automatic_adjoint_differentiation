@@ -13,20 +13,20 @@ pub enum Operation {
 }
 
 impl Operation {
-    pub fn backward_propagate(&mut self, parents: Vec<Uuid>) {
+    pub fn backward_propagate(&mut self, _parents: Vec<Uuid>) {
         match self {
-            Operation::Add(id, lhs, rhs, result) => {
+            Operation::Add(_id, lhs, rhs, result) => {
                 lhs.adjoint += result.adjoint;
                 rhs.adjoint += result.adjoint;
             }
-            Operation::Mul(id, lhs, rhs, result) => {
+            Operation::Mul(_id, lhs, rhs, result) => {
                 lhs.adjoint += result.adjoint * rhs.result;
                 rhs.adjoint += result.adjoint * lhs.result;
             }
-            Operation::Log(id, arg, result) => {
+            Operation::Log(_id, arg, result) => {
                 arg.adjoint += result.adjoint / arg.result;
             }
-            Operation::Value(id, value) => (),
+            Operation::Value(_id, _value) => (),
         }
     }
 }

@@ -96,7 +96,7 @@ impl Number {
 
 impl Number {
     fn add_value_operation(&self, number: Number) -> Option<Operation> {
-        if (number.is_leaf) {
+        if number.is_leaf {
             let uuid: Uuid = Uuid::new_v4();
             let operation = Operation::Value(uuid, number);
             automatic_differentiator::add_record(operation.clone());

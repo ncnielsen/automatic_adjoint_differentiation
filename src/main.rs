@@ -22,11 +22,9 @@ fn main() {
     ];
 
     let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
-    // Access RECORD through a safe API to avoid static mutable reference issues
 
     println!("Result in forward order:");
-    let record = automatic_differentiator::get_record();
-    for _x in automatic_differentiator::get_record() {
+    for _x in automatic_differentiator::get_record_collection() {
         //println!("{:?}", x);
     }
 
@@ -34,8 +32,10 @@ fn main() {
 
     println!("Result in reverse order after back propagation:");
 
-    let reverse = record.into_iter().rev();
+    let reverse = automatic_differentiator::get_record_collection()
+        .into_iter()
+        .rev();
     for x in reverse {
-        println!("{:?}", x);
+        println!("{}", x);
     }
 }

@@ -31,14 +31,6 @@ fn main() {
     println!("Printing parent map after back propagation");
     automatic_differentiator::print_parent_map();
 
-    /*
-    for _x in automatic_differentiator::get_record_collection() {
-        println!("{:?}", x);
-    }
-
-    let reverse = automatic_differentiator::get_record_collection();
-    for x in reverse {
-        println!("{}", x.1);
-    }
-    */
+    println!("printing record colection values after back propagation");
+    automatic_differentiator::print_record_collection_value_operations();
 }

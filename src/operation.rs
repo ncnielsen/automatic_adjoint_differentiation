@@ -2,14 +2,14 @@ use std::fmt::Display;
 
 use uuid::Uuid;
 
-use crate::{ number::Number};
+use crate::number::Number;
 
 #[derive(Debug, Clone)]
 pub enum Operation {
     Add(Number, Number, Number), // arg, arg, result
     Mul(Number, Number, Number), // arg, arg, result
     Log(Number, Number),         // arg, result
-    Value(Number),               // result. Values are always leafs
+    Value(Number),               // result
 }
 
 #[derive(Debug, Clone)]

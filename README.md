@@ -13,7 +13,7 @@ The idea is that for each of the basic operations, the derivative is known analy
 
 When the process completes, the dInput/dOutput has been calulated for each input. In addition the sensitivity/derivative of all intermediary operations have also been calcuated with respect to the output.
 
-While there are plenty of implementations of AAD in C++ and some in Rust, almost every implementation of AAD and every book on this subject assumes that functions are scalar-functions. That is they assume that the user is working on classical functions such as those prevalent in Finance (for example for calculating the price of an option).
+While there are plenty of implementations of AAD in C++ and some in Rust, almost every implementation of AAD and every book on this subject assumes that functions are scalar-functions. That is they assume that the user is working on classical functions such as those prevalent in Finance (for example for calculating the price of an option). This is also the case for the two reference books I have provided.
 
 However, for most scientific purposes, relationships are not expressed naturally as scalar functions. Instead, many scientific relationships are expressed using Vectors or One-forms (sometimes called Dual Vectors). More generally, scientific relationships are expressed in Tensors, where Tensors of rank 0 are scalars, Tensors of Rank 1,0 are Vectors and Tensors of Rank 0,1 are One-forms. But many important scientific relationships are expressed in general Tensors of rank m,n. Most notably Maxwells equations of electromagnitism in its covariant form is a (single) general Tensor equation. Another prominent example is Einsteins Field equations which can basically only be expressed as a general Tensor equation.
 

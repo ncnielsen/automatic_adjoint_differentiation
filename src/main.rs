@@ -5,7 +5,7 @@ pub mod number;
 pub mod operation;
 
 fn f(args: Vec<Number>) -> Number {
-    let y1 = args[2] * (Number::new(5.0) * args[0] + args[1]);
+    let y1 = args[2] * (args[4] * args[0] + args[1]);
     let y2 = y1.log();
     let y = (y1 + args[3] * y2) * (y1 + y2);
     y

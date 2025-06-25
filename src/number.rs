@@ -2,6 +2,7 @@ use std::fmt;
 use std::fmt::Display;
 use std::ops::Add;
 use std::ops::Mul;
+use std::ops::Sub;
 
 use crate::automatic_differentiator;
 use crate::operation::Operation;
@@ -48,6 +49,18 @@ impl Add for Number {
     }
 }
 
+impl Sub for Number {
+    type Output = Number;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let result: Number = Number::new_non_leaf(self.result - rhs.result);
+        let op = Operation::Sub(result.id, self.id, rhs.id, result.result, 0.0);
+        automatic_differentiator::register_operation(op);
+        automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id, rhs.id]);
+        result
+    }
+}
+
 impl Mul for Number {
     type Output = Number;
 
@@ -61,7 +74,7 @@ impl Mul for Number {
 }
 
 impl Number {
-    pub fn log(self) -> Number {
+    pub fn ln(self) -> Number {
         let result: Number = Number::new_non_leaf(self.result.ln());
         let op = Operation::Ln(result.id, self.id, result.result, 0.0);
         automatic_differentiator::register_operation(op);

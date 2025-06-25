@@ -3,6 +3,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub enum Operation {
     Add(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
+    Sub(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
     Mul(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
     Ln(i64, i64, f64, f64),       // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
@@ -23,28 +24,6 @@ impl AdjointUpdate {
     }
 }
 
-impl Operation {
-    pub fn backward_propagate(&mut self) {
-        match self {
-            Operation::Add(_, _, _, _, adjoint) => {
-                let add_adjoint = 1.0;
-                *adjoint += add_adjoint;
-            }
-            Operation::Mul(_, _, _, _, adjoint) => {
-                let mul_adjoint = 1.0;
-                *adjoint += mul_adjoint;
-            }
-            Operation::Ln(_, _, _, adjoint) => {
-                let log_adjoint = 1.0;
-                *adjoint += log_adjoint;
-            }
-            Operation::Value(_, _, adjoint) => {
-                *adjoint += 1.0;
-            }
-        }
-    }
-}
-
 impl Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -52,6 +31,13 @@ impl Display for Operation {
                 write!(
                     f,
                     "id {}: Add(lhs_id: {}, rhs_id: {}, res:{}, adjoint: {})",
+                    id, lhs_id, rhs_id, result, adjoint
+                )
+            }
+            Operation::Sub(id, lhs_id, rhs_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Sub(lhs_id: {}, rhs_id: {}, res:{}, adjoint: {})",
                     id, lhs_id, rhs_id, result, adjoint
                 )
             }

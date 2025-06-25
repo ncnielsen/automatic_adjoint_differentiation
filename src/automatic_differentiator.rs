@@ -40,6 +40,7 @@ pub fn register_operation(op: Operation) {
     let mut record = RECORD.lock().unwrap();
     let id = match op {
         Operation::Add(id, _, _, _, _)
+        | Operation::Sub(id, _, _, _, _)
         | Operation::Mul(id, _, _, _, _)
         | Operation::Ln(id, _, _, _)
         | Operation::Value(id, _, _) => id,
@@ -78,6 +79,7 @@ impl AutomaticDifferentiator {
             if let Some(rec) = record.get_mut(last_id) {
                 match rec {
                     Operation::Add(_, _, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Sub(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Mul(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Ln(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
@@ -92,6 +94,7 @@ impl AutomaticDifferentiator {
             if let Some(node) = record.get(node_map_entry) {
                 let node_id = match node {
                     Operation::Add(id, _lhs_id, _rhs_id, _res, _adj) => id,
+                    Operation::Sub(id, _lhs_id, _rhs_id, _res, _adj) => id,
                     Operation::Mul(id, _lhs_id, _rhs_id, _res, _adj) => id,
                     Operation::Ln(id, _arg_id, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
@@ -105,6 +108,15 @@ impl AutomaticDifferentiator {
                                 // lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
                                 // rhs_ = parent_ * Dparent/Drhs = parent_ * 1
                                 Operation::Add(id, _lhs_id, _rhs_id, _res, adj) => {
+                                    adjoint += adj; // lhs, rhs are identical, so this is enough
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
+                                }
+                                // TODO: lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
+                                // TODO: rhs_ = parent_ * Dparent/Drhs = parent_ * 1
+                                Operation::Sub(id, _lhs_id, _rhs_id, _res, adj) => {
                                     adjoint += adj; // lhs, rhs are identical, so this is enough
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
@@ -159,6 +171,7 @@ impl AutomaticDifferentiator {
             if let Some(node) = record.get_mut(node_map_entry) {
                 match node {
                     Operation::Add(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
+                    Operation::Sub(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
                     Operation::Mul(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
                     Operation::Ln(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
@@ -172,6 +185,7 @@ impl AutomaticDifferentiator {
 fn get_res_from_operation(op: &Operation) -> f64 {
     match op {
         Operation::Add(_, _, _, res, _) => *res,
+        Operation::Sub(_, _, _, res, _) => *res,
         Operation::Mul(_, _, _, res, _) => *res,
         Operation::Ln(_, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,

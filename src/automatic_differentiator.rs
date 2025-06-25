@@ -4,8 +4,12 @@ use once_cell::sync::Lazy;
 use ordered_hash_map::OrderedHashMap;
 use std::{collections::HashMap, sync::Mutex};
 
+use sorted_vec::SortedVec;
+
 static RECORD: Lazy<Mutex<HashMap<i64, Operation>>> =
     Lazy::new(|| Mutex::new(HashMap::<i64, Operation>::new()));
+
+static NODE_LIST: Lazy<Mutex<SortedVec<i64>>> = Lazy::new(|| Mutex::new(SortedVec::<i64>::new()));
 
 static PARENT_CHILD_MAP: Lazy<Mutex<OrderedHashMap<i64, Vec<i64>>>> =
     Lazy::new(|| Mutex::new(OrderedHashMap::<i64, Vec<i64>>::new()));
@@ -35,12 +39,14 @@ pub fn add_parent_child_relationship(parent: i64, children: Vec<i64>) {
 pub fn register_operation(op: Operation) {
     let mut record = RECORD.lock().unwrap();
     let id = match op {
-        Operation::Add(id, _, _)
-        | Operation::Mul(id, _, _)
-        | Operation::Log(id, _, _)
+        Operation::Add(id, _, _, _, _)
+        | Operation::Mul(id, _, _, _, _)
+        | Operation::Log(id, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
     record.insert(id, op);
+    let mut node_list = NODE_LIST.lock().unwrap();
+    node_list.push(id);
 }
 
 #[derive(Debug, Clone)]
@@ -58,54 +64,120 @@ impl AutomaticDifferentiator {
         func(arguments)
     }
 
-    pub fn backward_propagate(&self) -> Option<Number> {
+    pub fn reverse_propagate_adjoints(&self) -> Option<Number> {
+        print!("Running reverse mode adjoint propagation");
+        let node_list = NODE_LIST.lock().unwrap();
+        let child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
+
         let mut record = RECORD.lock().unwrap();
-        let parent_map = PARENT_CHILD_MAP.lock().unwrap();
-        let child_map = CHILD_PARENT_MAP.lock().unwrap();
 
         // Set adjoint of f() = y to 1.0. i.e. set value of the last entry to 1.0.
-        if let Some(last) = parent_map.back_entry() {
-            let last_id = last.0;
+        if let Some(last_id) = node_list.last() {
+            println!("Setting adjoint to 1.0 for id {}", last_id);
 
             if let Some(rec) = record.get_mut(last_id) {
                 match rec {
-                    Operation::Add(_, _, adjoint) => *adjoint = 1.0,
-                    Operation::Mul(_, _, adjoint) => *adjoint = 1.0,
-                    Operation::Log(_, _, adjoint) => *adjoint = 1.0,
+                    Operation::Add(_, _, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Mul(_, _, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Log(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
             }
         }
 
         // Reverse through the rest of the nodes, except the last which has already been set to 1.0
-        for parent_map_entry in parent_map.iter().rev().skip(1) {
-            if let Some(op) = record.get(parent_map_entry.0) {
-                let id = match op {
-                    Operation::Add(id, _, _)
-                    | Operation::Mul(id, _, _)
-                    | Operation::Log(id, _, _)
-                    | Operation::Value(id, _, _) => *id,
+        for node_map_entry in node_list.iter().rev().skip(1) {
+            // Implement the adjoint equation
+            let mut adjoint = 0.0;
+            if let Some(node) = record.get(node_map_entry) {
+                let node_id = match node {
+                    Operation::Add(id, _lhs_id, _rhs_id, _res, _adj) => id,
+                    Operation::Mul(id, _lhs_id, _rhs_id, _res, _adj) => id,
+                    Operation::Log(id, _arg_id, _res, _adj) => id,
+                    Operation::Value(id, _res, _adj) => id,
                 };
-                let parents = child_map.get_key_value(&id);
+
+                println!("Calculating adjoint for node Vi with id {}", node_id);
+                if let Some(parents) = child_parent_map.get(&node_id) {
+                    for parent in parents {
+                        if let Some(parent_operation) = record.get(&parent) {
+                            match parent_operation {
+                                // lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
+                                // rhs_ = parent_ * Dparent/Drhs = parent_ * 1
+                                Operation::Add(id, _lhs_id, _rhs_id, _res, adj) => {
+                                    adjoint += adj; // lhs, rhs are identical, so this is enough
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
+                                }
+                                Operation::Mul(id, lhs_id, rhs_id, _res, adj) => {
+                                    // lhs_ = parent_ * Dparent/Dlhs = parent_ * rhs
+                                    if node_id == lhs_id {
+                                        if let Some(rhs) = record.get(rhs_id) {
+                                            adjoint += adj * get_res_from_operation(&rhs);
+                                        }
+                                    }
+
+                                    // rhs_ = parent_ * Dparent/Drhs = parent_ * lhs
+                                    if node_id == rhs_id {
+                                        if let Some(lhs) = record.get(lhs_id) {
+                                            adjoint += adj * get_res_from_operation(&lhs);
+                                        }
+                                    }
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
+                                }
+
+                                Operation::Log(id, arg_id, _res, adj) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * 1/arg
+                                    if let Some(arg) = record.get(arg_id) {
+                                        let arg_res = get_res_from_operation(&arg);
+                                        adjoint += adj * (1.0 / arg_res);
+                                        println!(
+                                            "node with id {} has adjoint {}. ParentId: {}",
+                                            node_id, adjoint, id
+                                        );
+                                    }
+                                }
+                                Operation::Value(id, _res, adj) => {
+                                    adjoint += adj;
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
+                                }
+                            };
+                        }
+                    }
+                }
             }
 
-            /*
-            if let Some(op) = record.get_mut(parent_map_entry.0) {
-                let id = match op {
-                    Operation::Add(id, _, _)
-                    | Operation::Mul(id, _, _)
-                    | Operation::Log(id, _, _)
-                    | Operation::Value(id, _, _) => *id,
+            // update adjoint of record with node_id
+            if let Some(node) = record.get_mut(node_map_entry) {
+                match node {
+                    Operation::Add(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
+                    Operation::Mul(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
+                    Operation::Log(_id, _arg_id, _res, adj) => *adj += adjoint,
+                    Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
-                println!("reversing through id {}", id);
-                op.backward_propagate();
             }
-            */
         }
-
         None
     }
 }
+
+fn get_res_from_operation(op: &Operation) -> f64 {
+    match op {
+        Operation::Add(_, _, _, res, _) => *res,
+        Operation::Mul(_, _, _, res, _) => *res,
+        Operation::Log(_, _, res, _) => *res,
+        Operation::Value(_, res, _) => *res,
+    }
+}
+
 pub fn print_parent_map() {
     let parent_map = PARENT_CHILD_MAP.lock().unwrap();
     let record = RECORD.lock().unwrap();

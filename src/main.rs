@@ -27,14 +27,14 @@ fn main() {
     println!("printing parent map after forward evaluation");
     automatic_differentiator::print_parent_map_id();
 
-    let _backward_prop = automatic_differentiator.backward_propagate();
+    let _backward_prop = automatic_differentiator.reverse_propagate_adjoints();
 
-    println!("Printing parent map after back propagation");
-    automatic_differentiator::print_parent_map_id();
+    // println!("Printing parent map after back propagation");
+    // automatic_differentiator::print_parent_map_id();
 
-    println!("Printing child map after back propagation");
-    automatic_differentiator::print_child_map_id();
+    // println!("Printing child map after back propagation");
+    // automatic_differentiator::print_child_map_id();
 
-    println!("\n\nPrinting record colection values after back propagation");
-    automatic_differentiator::print_record_collection();
+    // println!("\n\nPrinting record colection values after back propagation");
+    // automatic_differentiator::print_record_collection();
 }

@@ -2,10 +2,10 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub enum Operation {
-    Add(i64, f64, f64),   // id, result, adjoint
-    Mul(i64, f64, f64),   // id, result, adjoint
-    Log(i64, f64, f64),   // id, result, adjoint
-    Value(i64, f64, f64), // id, result, adjoint
+    Add(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
+    Mul(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
+    Log(i64, i64, f64, f64),      // id, arg_id, result, adjoint
+    Value(i64, f64, f64),         // id, result, adjoint
 }
 
 #[derive(Debug, Clone)]
@@ -26,15 +26,15 @@ impl AdjointUpdate {
 impl Operation {
     pub fn backward_propagate(&mut self) {
         match self {
-            Operation::Add(_, _, adjoint) => {
+            Operation::Add(_, _, _, _, adjoint) => {
                 let add_adjoint = 1.0;
                 *adjoint += add_adjoint;
             }
-            Operation::Mul(_, _, adjoint) => {
+            Operation::Mul(_, _, _, _, adjoint) => {
                 let mul_adjoint = 1.0;
                 *adjoint += mul_adjoint;
             }
-            Operation::Log(_, _, adjoint) => {
+            Operation::Log(_, _, _, adjoint) => {
                 let log_adjoint = 1.0;
                 *adjoint += log_adjoint;
             }
@@ -48,14 +48,26 @@ impl Operation {
 impl Display for Operation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Operation::Add(id, result, adjoint) => {
-                write!(f, "id {}: Add(res:{}, adjoint: {})", id, result, adjoint)
+            Operation::Add(id, lhs_id, rhs_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Add(lhs_id: {}, rhs_id: {}, res:{}, adjoint: {})",
+                    id, lhs_id, rhs_id, result, adjoint
+                )
             }
-            Operation::Mul(id, result, adjoint) => {
-                write!(f, "id {}: Mul(res:{}, adjoint: {})", id, result, adjoint)
+            Operation::Mul(id, lhs_id, rhs_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Mul(lhs_id: {}, rhs_id: {}, res:{}, adjoint: {})",
+                    id, lhs_id, rhs_id, result, adjoint
+                )
             }
-            Operation::Log(id, result, adjoint) => {
-                write!(f, "id {}: Log(res:{}, adjoint {})", id, result, adjoint)
+            Operation::Log(id, arg_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Log(arg_id: {}, res:{}, adjoint {})",
+                    id, arg_id, result, adjoint
+                )
             }
             Operation::Value(id, value, adjoint) => {
                 write!(f, "id: {}: Value({}, adjoint {})", id, value, adjoint)

@@ -41,7 +41,7 @@ impl Add for Number {
 
     fn add(self, rhs: Self) -> Self::Output {
         let result: Number = Number::new_non_leaf(self.result + rhs.result);
-        let op = Operation::Add(result.id, result.result, 0.0);
+        let op = Operation::Add(result.id, self.id, rhs.id, result.result, 0.0);
         automatic_differentiator::register_operation(op);
         automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id, rhs.id]);
         result
@@ -53,7 +53,7 @@ impl Mul for Number {
 
     fn mul(self, rhs: Self) -> Self::Output {
         let result: Number = Number::new_non_leaf(self.result * rhs.result);
-        let op = Operation::Mul(result.id, result.result, 0.0);
+        let op = Operation::Mul(result.id, self.id, rhs.id, result.result, 0.0);
         automatic_differentiator::register_operation(op);
         automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id, rhs.id]);
         result
@@ -63,7 +63,7 @@ impl Mul for Number {
 impl Number {
     pub fn log(self) -> Number {
         let result: Number = Number::new_non_leaf(self.result.ln());
-        let op = Operation::Log(result.id, result.result, 0.0);
+        let op = Operation::Log(result.id, self.id, result.result, 0.0);
         automatic_differentiator::register_operation(op);
         automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id]);
         result

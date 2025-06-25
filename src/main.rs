@@ -1,6 +1,7 @@
 use crate::{automatic_differentiator::AutomaticDifferentiator, number::Number};
 
 pub mod automatic_differentiator;
+pub mod global_counter;
 pub mod number;
 pub mod operation;
 
@@ -24,13 +25,16 @@ fn main() {
     let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
     println!("printing parent map after forward evaluation");
-    automatic_differentiator::print_parent_map();
+    automatic_differentiator::print_parent_map_id();
 
     let _backward_prop = automatic_differentiator.backward_propagate();
 
     println!("Printing parent map after back propagation");
-    automatic_differentiator::print_parent_map();
+    automatic_differentiator::print_parent_map_id();
 
-    println!("printing record colection values after back propagation");
-    automatic_differentiator::print_record_collection_value_operations();
+    println!("Printing child map after back propagation");
+    automatic_differentiator::print_child_map_id();
+
+    println!("\n\nPrinting record colection values after back propagation");
+    automatic_differentiator::print_record_collection();
 }

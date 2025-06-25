@@ -27,4 +27,3 @@ There are two underlying principles for this implementation:
 1) Make it work, then make it fast
 2) Use functional language principles to increase readability
 
-

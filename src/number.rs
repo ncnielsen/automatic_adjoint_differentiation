@@ -63,7 +63,7 @@ impl Mul for Number {
 impl Number {
     pub fn log(self) -> Number {
         let result: Number = Number::new_non_leaf(self.result.ln());
-        let op = Operation::Log(result.id, self.id, result.result, 0.0);
+        let op = Operation::Ln(result.id, self.id, result.result, 0.0);
         automatic_differentiator::register_operation(op);
         automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id]);
         result

@@ -4,7 +4,7 @@ use std::fmt::Display;
 pub enum Operation {
     Add(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
     Mul(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
-    Log(i64, i64, f64, f64),      // id, arg_id, result, adjoint
+    Ln(i64, i64, f64, f64),       // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
 
@@ -34,7 +34,7 @@ impl Operation {
                 let mul_adjoint = 1.0;
                 *adjoint += mul_adjoint;
             }
-            Operation::Log(_, _, _, adjoint) => {
+            Operation::Ln(_, _, _, adjoint) => {
                 let log_adjoint = 1.0;
                 *adjoint += log_adjoint;
             }
@@ -62,7 +62,7 @@ impl Display for Operation {
                     id, lhs_id, rhs_id, result, adjoint
                 )
             }
-            Operation::Log(id, arg_id, result, adjoint) => {
+            Operation::Ln(id, arg_id, result, adjoint) => {
                 write!(
                     f,
                     "id {}: Log(arg_id: {}, res:{}, adjoint {})",

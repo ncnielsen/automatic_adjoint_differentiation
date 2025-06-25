@@ -41,7 +41,7 @@ pub fn register_operation(op: Operation) {
     let id = match op {
         Operation::Add(id, _, _, _, _)
         | Operation::Mul(id, _, _, _, _)
-        | Operation::Log(id, _, _, _)
+        | Operation::Ln(id, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
     record.insert(id, op);
@@ -79,7 +79,7 @@ impl AutomaticDifferentiator {
                 match rec {
                     Operation::Add(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Mul(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Log(_, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Ln(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
             }
@@ -93,7 +93,7 @@ impl AutomaticDifferentiator {
                 let node_id = match node {
                     Operation::Add(id, _lhs_id, _rhs_id, _res, _adj) => id,
                     Operation::Mul(id, _lhs_id, _rhs_id, _res, _adj) => id,
-                    Operation::Log(id, _arg_id, _res, _adj) => id,
+                    Operation::Ln(id, _arg_id, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
                 };
 
@@ -131,7 +131,7 @@ impl AutomaticDifferentiator {
                                     );
                                 }
 
-                                Operation::Log(id, arg_id, _res, adj) => {
+                                Operation::Ln(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * 1/arg
                                     if let Some(arg) = record.get(arg_id) {
                                         let arg_res = get_res_from_operation(&arg);
@@ -160,7 +160,7 @@ impl AutomaticDifferentiator {
                 match node {
                     Operation::Add(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
                     Operation::Mul(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
-                    Operation::Log(_id, _arg_id, _res, adj) => *adj += adjoint,
+                    Operation::Ln(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
             }
@@ -173,7 +173,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
     match op {
         Operation::Add(_, _, _, res, _) => *res,
         Operation::Mul(_, _, _, res, _) => *res,
-        Operation::Log(_, _, res, _) => *res,
+        Operation::Ln(_, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,
     }
 }

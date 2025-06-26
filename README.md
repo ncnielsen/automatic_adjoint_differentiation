@@ -24,7 +24,7 @@ There are plenty of books on Tensor Algebra (sometimes called multilinear algebr
 There are plenty of commercially available tools - especially for engineering-purposes, that probably run on a closed-source implementions of AAD for m,n Tensors. But there are very few open source libraries. 
 
 
-Should you wish to join this effort and contribute code, the project build on the following principles:
+Should you wish to join this effort and contribute code, the project builds on the following principles:
 
 1) Make it work, then make it fast. Premature optimization can lay any good code base in ruins before it has even been completed. 
 

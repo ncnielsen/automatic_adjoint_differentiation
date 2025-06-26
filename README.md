@@ -26,7 +26,7 @@ There are plenty of commercially available tools - especially for engineering-pu
 
 Should you wish to join this effort and contribute code, the project builds on the following principles:
 
-1) Make it work, then make it fast. Premature optimization can lay any good code base in ruins before it has even been completed. 
+1) First make it work, then make it fast. Premature optimization can lay any good code base in ruins before it has even been completed. 
 
 2) Use functional language principles wherever possible, to increase readability
 

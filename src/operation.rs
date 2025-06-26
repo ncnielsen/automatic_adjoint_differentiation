@@ -7,6 +7,7 @@ pub enum Operation {
     Mul(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
     Div(i64, i64, i64, f64, f64), // id, num_id, den_id, result, adjoint
     Ln(i64, i64, f64, f64),       // id, arg_id, result, adjoint
+    Sin(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
 
@@ -59,7 +60,14 @@ impl Display for Operation {
             Operation::Ln(id, arg_id, result, adjoint) => {
                 write!(
                     f,
-                    "id {}: Log(arg_id: {}, res:{}, adjoint {})",
+                    "id {}: Ln(arg_id: {}, res:{}, adjoint {})",
+                    id, arg_id, result, adjoint
+                )
+            }
+            Operation::Sin(id, arg_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Sin(arg_id: {}, res:{}, adjoint {})",
                     id, arg_id, result, adjoint
                 )
             }

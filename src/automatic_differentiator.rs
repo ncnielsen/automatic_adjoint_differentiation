@@ -45,6 +45,7 @@ pub fn register_operation(op: Operation) {
         | Operation::Div(id, _, _, _, _)
         | Operation::Ln(id, _, _, _)
         | Operation::Sin(id, _, _, _)
+        | Operation::Exp(id, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
     record.insert(id, op);
@@ -86,6 +87,7 @@ impl AutomaticDifferentiator {
                     Operation::Div(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Ln(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Sin(_, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Exp(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
             }
@@ -103,6 +105,7 @@ impl AutomaticDifferentiator {
                     Operation::Div(id, _num_id, _den_id, _res, _adj) => id,
                     Operation::Ln(id, _arg_id, _res, _adj) => id,
                     Operation::Sin(id, _arg_id, _res, _adj) => id,
+                    Operation::Exp(id, _arg_id, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
                 };
 
@@ -197,13 +200,20 @@ impl AutomaticDifferentiator {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * cos(arg)
                                     if let Some(arg) = record.get(arg_id) {
                                         let arg = get_res_from_operation(&arg);
-                                        let arg_res = adj * arg.cos();
-                                        adjoint += adj * (1.0 / arg_res);
+                                        adjoint += adj * arg.cos();
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
                                             node_id, adjoint, id
                                         );
                                     }
+                                }
+                                Operation::Exp(id, _arg_id, res, adj) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * 1.0 * res
+                                    adjoint += adj * res;
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
                                 }
                                 Operation::Value(id, _res, adj) => {
                                     adjoint += adj;
@@ -227,6 +237,7 @@ impl AutomaticDifferentiator {
                     Operation::Div(_id, _num_id, _den_id, _res, adj) => *adj += adjoint,
                     Operation::Ln(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Sin(_id, _arg_id, _res, adj) => *adj += adjoint,
+                    Operation::Exp(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
             }
@@ -251,6 +262,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
         Operation::Div(_, _, _, res, _) => *res,
         Operation::Ln(_, _, res, _) => *res,
         Operation::Sin(_, _, res, _) => *res,
+        Operation::Exp(_, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,
     }
 }

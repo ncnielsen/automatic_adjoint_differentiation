@@ -102,6 +102,14 @@ impl Number {
         automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id]);
         result
     }
+
+    pub fn exp(self) -> Number {
+        let result: Number = Number::new_non_leaf(self.result.exp());
+        let op = Operation::Exp(result.id, self.id, result.result, 0.0);
+        automatic_differentiator::register_operation(op);
+        automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id]);
+        result
+    }
 }
 
 impl Display for Number {

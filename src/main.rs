@@ -9,8 +9,7 @@ fn f(args: Vec<Number>) -> Number {
     let x1 = args[0];
     let x2 = args[1];
     let frac = x1 / x2;
-
-    frac
+    (frac.sin() + frac - x2.exp()) * (frac - x2.exp())
 }
 
 fn main() {

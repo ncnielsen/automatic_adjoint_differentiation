@@ -42,6 +42,7 @@ pub fn register_operation(op: Operation) {
         Operation::Add(id, _, _, _, _)
         | Operation::Sub(id, _, _, _, _)
         | Operation::Mul(id, _, _, _, _)
+        | Operation::Div(id, _, _, _, _)
         | Operation::Ln(id, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
@@ -81,6 +82,7 @@ impl AutomaticDifferentiator {
                     Operation::Add(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Sub(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Mul(_, _, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Div(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Ln(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
@@ -96,6 +98,7 @@ impl AutomaticDifferentiator {
                     Operation::Add(id, _lhs_id, _rhs_id, _res, _adj) => id,
                     Operation::Sub(id, _lhs_id, _rhs_id, _res, _adj) => id,
                     Operation::Mul(id, _lhs_id, _rhs_id, _res, _adj) => id,
+                    Operation::Div(id, _num_id, _den_id, _res, _adj) => id,
                     Operation::Ln(id, _arg_id, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
                 };
@@ -133,14 +136,40 @@ impl AutomaticDifferentiator {
                                     // lhs_ = parent_ * Dparent/Dlhs = parent_ * rhs
                                     if node_id == lhs_id {
                                         if let Some(rhs) = record.get(rhs_id) {
-                                            adjoint += adj * get_res_from_operation(&rhs);
+                                            let rhs = get_res_from_operation(&rhs);
+                                            adjoint += adj * rhs;
                                         }
                                     }
 
                                     // rhs_ = parent_ * Dparent/Drhs = parent_ * lhs
                                     if node_id == rhs_id {
                                         if let Some(lhs) = record.get(lhs_id) {
-                                            adjoint += adj * get_res_from_operation(&lhs);
+                                            let lhs = get_res_from_operation(&lhs);
+                                            adjoint += adj * lhs;
+                                        }
+                                    }
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
+                                }
+                                Operation::Div(id, num_id, den_id, _res, adj) => {
+                                    // num_ = parent_ * Dparent/Dnum = parent_ * 1/den
+                                    if node_id == num_id {
+                                        if let Some(den) = record.get(den_id) {
+                                            let den = get_res_from_operation(&den);
+                                            adjoint += adj * 1.0 / den;
+                                        }
+                                    }
+
+                                    // den_ = parent_ * Dparent/Dden = parent_ * -1 * (num/den^2)
+                                    if node_id == den_id {
+                                        if let Some(num) = record.get(num_id) {
+                                            if let Some(den) = record.get(den_id) {
+                                                let num = get_res_from_operation(&num);
+                                                let den = get_res_from_operation(&den);
+                                                adjoint += adj * -1.0 * (num / (den * den));
+                                            }
                                         }
                                     }
                                     println!(
@@ -179,6 +208,7 @@ impl AutomaticDifferentiator {
                     Operation::Add(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
                     Operation::Sub(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
                     Operation::Mul(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
+                    Operation::Div(_id, _num_id, _den_id, _res, adj) => *adj += adjoint,
                     Operation::Ln(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
@@ -201,6 +231,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
         Operation::Add(_, _, _, res, _) => *res,
         Operation::Sub(_, _, _, res, _) => *res,
         Operation::Mul(_, _, _, res, _) => *res,
+        Operation::Div(_, _, _, res, _) => *res,
         Operation::Ln(_, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,
     }

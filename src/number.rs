@@ -1,6 +1,7 @@
 use std::fmt;
 use std::fmt::Display;
 use std::ops::Add;
+use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 
@@ -67,6 +68,18 @@ impl Mul for Number {
     fn mul(self, rhs: Self) -> Self::Output {
         let result: Number = Number::new_non_leaf(self.result * rhs.result);
         let op = Operation::Mul(result.id, self.id, rhs.id, result.result, 0.0);
+        automatic_differentiator::register_operation(op);
+        automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id, rhs.id]);
+        result
+    }
+}
+
+impl Div for Number {
+    type Output = Number;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        let result: Number = Number::new_non_leaf(self.result / rhs.result);
+        let op = Operation::Div(result.id, self.id, rhs.id, result.result, 0.0);
         automatic_differentiator::register_operation(op);
         automatic_differentiator::add_parent_child_relationship(result.id, vec![self.id, rhs.id]);
         result

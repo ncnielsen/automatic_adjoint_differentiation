@@ -5,6 +5,7 @@ pub enum Operation {
     Add(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
     Sub(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
     Mul(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
+    Div(i64, i64, i64, f64, f64), // id, num_id, den_id, result, adjoint
     Ln(i64, i64, f64, f64),       // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
@@ -45,6 +46,13 @@ impl Display for Operation {
                 write!(
                     f,
                     "id {}: Mul(lhs_id: {}, rhs_id: {}, res:{}, adjoint: {})",
+                    id, lhs_id, rhs_id, result, adjoint
+                )
+            }
+            Operation::Div(id, lhs_id, rhs_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Div(num_id: {}, den_id: {}, res:{}, adjoint: {})",
                     id, lhs_id, rhs_id, result, adjoint
                 )
             }

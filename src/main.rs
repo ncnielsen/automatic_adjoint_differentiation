@@ -6,25 +6,21 @@ pub mod number;
 pub mod operation;
 
 fn f(args: Vec<Number>) -> Number {
-    let y1 = args[2] * (args[4] * args[0] + args[1]);
-    let y2 = y1.ln();
-    let y = (y1 + args[3] * y2) * (y1 + y2);
-    y
+    let x1 = args[0];
+    let x2 = args[1];
+    let frac = x1 / x2;
+
+    frac
 }
 
 fn main() {
     let automatic_differentiator = AutomaticDifferentiator::new();
 
-    let arguments = vec![
-        Number::new(1.0),
-        Number::new(2.0),
-        Number::new(3.0),
-        Number::new(4.0),
-        Number::new(5.0),
-    ];
+    let arguments = vec![Number::new(1.5), Number::new(0.5)];
 
     let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
+    println!("forward eval {}", _forward_eval);
     println!("printing parent map after forward evaluation");
     automatic_differentiator::print_parent_map_id();
 

@@ -269,58 +269,61 @@ mod automatic_differentiator_tests {
     fn test_operators_add_mul_ln() {
         let automatic_differentiator = AutomaticDifferentiator::new();
 
-        let arguments = vec![
-            Number::new(1.0),
-            Number::new(2.0),
-            Number::new(3.0),
-            Number::new(4.0),
-            Number::new(5.0),
-        ];
+        let x1 = Number::new(1.0);
+        let x2 = Number::new(2.0);
+        let x3 = Number::new(3.0);
+        let x4 = Number::new(4.0);
+        let x5 = Number::new(5.0);
 
-        let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
+        let arguments = vec![x1, x2, x3, x4, x5];
+
+        let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
+
         automatic_differentiator.reverse_propagate_adjoints();
         let differentials = automatic_differentiator.get_differentials();
         assert_eq!(differentials.len(), 5);
-        let adjoints: Vec<(f64, f64)> = differentials
+
+        let adjoints: Vec<(i64, f64, f64)> = differentials
             .iter()
             .map(|op| match op {
-                Operation::Value(_, res, adj) => (*res, *adj),
-                _ => (0.0, 0.0),
+                Operation::Value(id, res, adj) => (*id, *res, *adj),
+                _ => (0, 0.0, 0.0),
             })
             .collect();
-        let epsilon = 1e-10;
 
         let x1 = adjoints
             .iter()
-            .filter(|x| x.0 == 1.0)
-            .map(|x| x.1)
+            .filter(|x| x.0 == x1.id)
+            .map(|x| x.2)
             .next()
             .unwrap();
         let x2 = adjoints
             .iter()
-            .filter(|x| x.0 == 2.0)
-            .map(|x| x.1)
+            .filter(|x| x.0 == x2.id)
+            .map(|x| x.2)
             .next()
             .unwrap();
         let x3 = adjoints
             .iter()
-            .filter(|x| x.0 == 3.0)
-            .map(|x| x.1)
+            .filter(|x| x.0 == x3.id)
+            .map(|x| x.2)
             .next()
             .unwrap();
         let x4 = adjoints
             .iter()
-            .filter(|x| x.0 == 4.0)
-            .map(|x| x.1)
+            .filter(|x| x.0 == x4.id)
+            .map(|x| x.2)
             .next()
             .unwrap();
         let x5 = adjoints
             .iter()
-            .filter(|x| x.0 == 5.0)
-            .map(|x| x.1)
+            .filter(|x| x.0 == x5.id)
+            .map(|x| x.2)
             .next()
             .unwrap();
 
+        let epsilon = 1e-10;
+        assert!(forward_eval.result - 797.75132345616487 < epsilon);
         assert!(x1 - 950.7364539019619 < epsilon);
         assert!(x2 - 190.14729078039238 < epsilon);
         assert!(x3 - 443.6770118209156 < epsilon);

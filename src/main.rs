@@ -28,7 +28,7 @@ fn main() {
     println!("printing parent map after forward evaluation");
     automatic_differentiator::print_parent_map_id();
 
-    let _backward_prop = automatic_differentiator.reverse_propagate_adjoints();
+    automatic_differentiator.reverse_propagate_adjoints();
 
     // println!("Printing parent map after back propagation");
     // automatic_differentiator::print_parent_map_id();

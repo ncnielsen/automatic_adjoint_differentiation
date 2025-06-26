@@ -65,7 +65,7 @@ impl AutomaticDifferentiator {
         func(arguments)
     }
 
-    pub fn reverse_propagate_adjoints(&self) -> Option<Number> {
+    pub fn reverse_propagate_adjoints(&self) {
         print!("Running reverse mode adjoint propagation");
         let node_list = NODE_LIST.lock().unwrap();
         let child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
@@ -184,7 +184,15 @@ impl AutomaticDifferentiator {
                 };
             }
         }
-        None
+    }
+
+    pub fn get_differentials(&self) -> Vec<Operation> {
+        let record = RECORD.lock().unwrap();
+        record
+            .values()
+            .filter(|op| matches!(op, Operation::Value(_, _, _)))
+            .cloned()
+            .collect()
     }
 }
 
@@ -270,7 +278,53 @@ mod automatic_differentiator_tests {
         ];
 
         let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
-        let _backward_prop = automatic_differentiator.reverse_propagate_adjoints();
-        assert_eq!(4, 4);
+        automatic_differentiator.reverse_propagate_adjoints();
+        let differentials = automatic_differentiator.get_differentials();
+        assert_eq!(differentials.len(), 5);
+        let adjoints: Vec<(f64, f64)> = differentials
+            .iter()
+            .map(|op| match op {
+                Operation::Value(_, res, adj) => (*res, *adj),
+                _ => (0.0, 0.0),
+            })
+            .collect();
+        let epsilon = 1e-10;
+
+        let x1 = adjoints
+            .iter()
+            .filter(|x| x.0 == 1.0)
+            .map(|x| x.1)
+            .next()
+            .unwrap();
+        let x2 = adjoints
+            .iter()
+            .filter(|x| x.0 == 2.0)
+            .map(|x| x.1)
+            .next()
+            .unwrap();
+        let x3 = adjoints
+            .iter()
+            .filter(|x| x.0 == 3.0)
+            .map(|x| x.1)
+            .next()
+            .unwrap();
+        let x4 = adjoints
+            .iter()
+            .filter(|x| x.0 == 4.0)
+            .map(|x| x.1)
+            .next()
+            .unwrap();
+        let x5 = adjoints
+            .iter()
+            .filter(|x| x.0 == 5.0)
+            .map(|x| x.1)
+            .next()
+            .unwrap();
+
+        assert!(x1 - 950.7364539019619 < epsilon);
+        assert!(x2 - 190.14729078039238 < epsilon);
+        assert!(x3 - 443.6770118209156 < epsilon);
+        assert!(x4 - 73.20408806599326 < epsilon);
+        assert!(x5 - 190.14729078039238 < epsilon);
     }
 }

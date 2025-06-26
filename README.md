@@ -1,10 +1,9 @@
 An implementation of Automatic Adjoint Differentiation (AAD) in the programming language Rust.
 
 There are plenty of books on this subject. A particularly good book is "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation, Second Edition"
-by authors Andreas Griewank and Andrea Walther (see https://epubs.siam.org/doi/book/10.1137/1.9780898717761)
+by authors Andreas Griewank and Andrea Walther (see https://epubs.siam.org/doi/book/10.1137/1.9780898717761). The example used in this book to illustrate the concepts is also used as a test case in this code.
 
-Another good book is Modern Computational Finance by author Antoine Savine. The example used in some of the test cases is taken directly from this book.
-(see https://antoinesavine.com/books-by-antoine-savine/)
+Another good book is Modern Computational Finance by author Antoine Savine (see https://antoinesavine.com/books-by-antoine-savine/). The example used in this book to illustrate the concepts is also used as a test case in this code.
 
 AAD is a method for automatically evaluating derivatives for any given (smooth) mathematical expression. Other methods include finite differences such as forward, backward and centered difference which are all based on Taylor Series expansions.
 AAD is not based on Tailor Series expansion. Instead, the idea is taking any given (smooth) mathematical expression and construct an abstract-syntax-tree (AST) structure by breaking down the expression into its basic operations, say +, -, /, *, ln(x), sqrt, e^(x) etc.

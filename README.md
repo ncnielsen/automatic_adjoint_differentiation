@@ -28,7 +28,7 @@ Should you wish to join this effort and contribute code, the project builds on t
 
 1) Make it work, then make it fast. Premature optimization can lay any good code base in ruins before it has even been completed. 
 
-2) Use functional language principles wherever possiblr, to increase readability
+2) Use functional language principles wherever possible, to increase readability
 
 3) Iterations, iterations, iterations. Every great project started out small. While the vision for this project is both grand and ambitious, we take one step at a time. We acknowledge that we have much to learn and we plan in learning by doing.
 

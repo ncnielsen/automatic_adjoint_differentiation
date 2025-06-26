@@ -32,3 +32,4 @@ Should you wish to join this effort and contribute code, the project builds on t
 
 3) Iterations, iterations, iterations. Every great project started out small. While the vision for this project is both grand and ambitious, we take one step at a time. We acknowledge that we have much to learn and we plan in learning by doing.
 
+4) Free and Open Source Software

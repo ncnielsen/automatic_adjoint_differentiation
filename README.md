@@ -3,7 +3,7 @@ An implementation of Automatic Adjoint Differentiation (AAD) in the programming 
 There are plenty of books on this subject. A particularly good book is "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation, Second Edition"
 by authors Andreas Griewank and Andrea Walther (see https://epubs.siam.org/doi/book/10.1137/1.9780898717761)
 
-Another good book is Modern Computational Finance by author Antoine Savine. The example used in this codes' main function is taken directly from this book.
+Another good book is Modern Computational Finance by author Antoine Savine. The example used in some of the test cases is taken directly from this book.
 (see https://antoinesavine.com/books-by-antoine-savine/)
 
 AAD is a method for automatically evaluating derivatives for any given (smooth) mathematical expression. Other methods include finite differences such as forward, backward and centered difference which are all based on Taylor Series expansions.

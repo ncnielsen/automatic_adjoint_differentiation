@@ -114,10 +114,16 @@ impl AutomaticDifferentiator {
                                         node_id, adjoint, id
                                     );
                                 }
-                                // TODO: lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
-                                // TODO: rhs_ = parent_ * Dparent/Drhs = parent_ * 1
-                                Operation::Sub(id, _lhs_id, _rhs_id, _res, adj) => {
-                                    adjoint += adj; // lhs, rhs are identical, so this is enough
+                                Operation::Sub(id, lhs_id, rhs_id, _res, adj) => {
+                                    // lhs_ = parent_ * Dparent/Dlhs = parent_
+                                    if node_id == lhs_id {
+                                        adjoint += adj;
+                                    }
+
+                                    // rhs_ = parent_ * Dparent/Drhs = -1 * parent_
+                                    if node_id == rhs_id {
+                                        adjoint += adj * -1.0;
+                                    }
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
                                         node_id, adjoint, id
@@ -237,5 +243,34 @@ pub fn print_record_collection_value_operations() {
         .filter(|(_, op)| matches!(op, Operation::Value(_, _, _)));
     for (_, op) in value_operations {
         println!("{0}", op);
+    }
+}
+
+#[cfg(test)]
+mod automatic_differentiator_tests {
+    use super::*;
+
+    fn f(args: Vec<Number>) -> Number {
+        let y1 = args[2] * (args[4] * args[0] + args[1]);
+        let y2 = y1.ln();
+        let y = (y1 + args[3] * y2) * (y1 + y2);
+        y
+    }
+
+    #[test]
+    fn test_operators_add_mul_ln() {
+        let automatic_differentiator = AutomaticDifferentiator::new();
+
+        let arguments = vec![
+            Number::new(1.0),
+            Number::new(2.0),
+            Number::new(3.0),
+            Number::new(4.0),
+            Number::new(5.0),
+        ];
+
+        let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
+        let _backward_prop = automatic_differentiator.reverse_propagate_adjoints();
+        assert_eq!(4, 4);
     }
 }

@@ -252,6 +252,20 @@ impl AutomaticDifferentiator {
             .cloned()
             .collect()
     }
+
+    pub fn clear(&self) {
+        let mut record = RECORD.lock().unwrap();
+        record.clear();
+
+        let mut node_list = NODE_LIST.lock().unwrap();
+        node_list.clear();
+
+        let mut parent_child_map = PARENT_CHILD_MAP.lock().unwrap();
+        parent_child_map.clear();
+
+        let mut child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
+        child_parent_map.clear();
+    }
 }
 
 fn get_res_from_operation(op: &Operation) -> f64 {
@@ -319,13 +333,6 @@ pub fn print_record_collection_value_operations() {
 mod automatic_differentiator_tests {
     use super::*;
 
-    fn f(args: Vec<Number>) -> Number {
-        let y1 = args[2] * (args[4] * args[0] + args[1]);
-        let y2 = y1.ln();
-        let y = (y1 + args[3] * y2) * (y1 + y2);
-        y
-    }
-
     #[test]
     fn test_operators_add_mul_ln() {
         let automatic_differentiator = AutomaticDifferentiator::new();
@@ -337,6 +344,13 @@ mod automatic_differentiator_tests {
         let x5 = Number::new(5.0);
 
         let arguments = vec![x1, x2, x3, x4, x5];
+
+        fn f(args: Vec<Number>) -> Number {
+            let y1 = args[2] * (args[4] * args[0] + args[1]);
+            let y2 = y1.ln();
+            let y = (y1 + args[3] * y2) * (y1 + y2);
+            y
+        }
 
         let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
@@ -390,5 +404,53 @@ mod automatic_differentiator_tests {
         assert!(x3 - 443.6770118209156 < epsilon);
         assert!(x4 - 73.20408806599326 < epsilon);
         assert!(x5 - 190.14729078039238 < epsilon);
+    }
+
+    #[test]
+    fn test_operators_sub_sin_div() {
+        let automatic_differentiator = AutomaticDifferentiator::new();
+
+        let x1 = Number::new(1.5);
+        let x2 = Number::new(0.5);
+
+        let arguments = vec![x1, x2];
+
+        fn f(args: Vec<Number>) -> Number {
+            let x1 = args[0];
+            let x2 = args[1];
+            let frac = x1 / x2;
+            (frac.sin() + frac - x2.exp()) * (frac - x2.exp())
+        }
+
+        let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
+
+        automatic_differentiator.reverse_propagate_adjoints();
+        let differentials = automatic_differentiator.get_differentials();
+        assert_eq!(differentials.len(), 2);
+
+        let adjoints: Vec<(i64, f64, f64)> = differentials
+            .iter()
+            .map(|op| match op {
+                Operation::Value(id, res, adj) => (*id, *res, *adj),
+                _ => (0, 0.0, 0.0),
+            })
+            .collect();
+
+        let x1 = adjoints
+            .iter()
+            .filter(|x| x.0 == x1.id)
+            .map(|x| x.2)
+            .next()
+            .unwrap();
+        let x2 = adjoints
+            .iter()
+            .filter(|x| x.0 == x2.id)
+            .map(|x| x.2)
+            .next()
+            .unwrap();
+        let epsilon = 1e-10;
+        assert!(forward_eval.result - 2.017 < epsilon);
+        assert!(x1 - 3.0118433276739069 < epsilon);
+        assert!(x2 - (-13.723961509314076) < epsilon);
     }
 }

@@ -25,9 +25,6 @@ fn main() {
 
     automatic_differentiator.reverse_propagate_adjoints();
 
-    // println!("Printing parent map after back propagation");
-    // automatic_differentiator::print_parent_map_id();
-
     // println!("Printing child map after back propagation");
     // automatic_differentiator::print_child_map_id();
 

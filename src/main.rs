@@ -1,10 +1,5 @@
-use crate::{automatic_differentiator::AutomaticDifferentiator, number::Number};
-
-pub mod automatic_differentiator;
-pub mod global_counter;
-pub mod number;
-pub mod operation;
-pub mod shared_data_communication_channel;
+use aad::automatic_differentiator::AutomaticDifferentiator;
+use aad::number::Number;
 
 fn _g(args: Vec<Number>) -> Number {
     let x1 = args[0];

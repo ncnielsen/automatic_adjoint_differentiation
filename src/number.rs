@@ -1,12 +1,10 @@
+use crate::operation::Operation;
 use std::fmt;
 use std::fmt::Display;
 use std::ops::Add;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
-
-use crate::automatic_differentiator;
-use crate::operation::Operation;
 
 use crate::global_counter::OPERATION_ID_COUNTER;
 use crate::shared_data_communication_channel;

@@ -6,7 +6,7 @@ pub mod number;
 pub mod operation;
 pub mod shared_data_communication_channel;
 
-fn g(args: Vec<Number>) -> Number {
+fn _g(args: Vec<Number>) -> Number {
     let x1 = args[0];
     let x2 = args[1];
     let frac = x1 / x2;
@@ -14,7 +14,7 @@ fn g(args: Vec<Number>) -> Number {
 }
 
 fn main() {
-    let arguments_g = vec![Number::new(1.5), Number::new(0.5)];
+    let _arguments_g = vec![Number::new(1.5), Number::new(0.5)];
 
     let mut automatic_differentiator = AutomaticDifferentiator::new();
 

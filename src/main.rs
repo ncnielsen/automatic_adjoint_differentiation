@@ -38,12 +38,12 @@ fn main() {
     let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
     println!("forward eval {}", _forward_eval);
-    println!("printing parent map after forward evaluation");
-    automatic_differentiator.print_parent_map_id();
+    //println!("printing parent map after forward evaluation");
+    //automatic_differentiator.print_parent_map_id();
 
     automatic_differentiator.reverse_propagate_adjoints();
 
-    println!("Printing differentials after back propagation");
+    println!("Differentials");
     automatic_differentiator.print_differentials(arg_clone);
 
     // println!("Printing child map after back propagation");

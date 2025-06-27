@@ -284,7 +284,7 @@ impl AutomaticDifferentiator {
                 .map(|x| x.2)
                 .next()
                 .unwrap();
-            print!(
+            println!(
                 "Argument with id {} and Value {} has differential {}",
                 arg.id, arg.result, diff
             );

@@ -1,4 +1,4 @@
-use crate::{number::Number, operation::Operation};
+use crate::{number::Number, operation::Operation, shared_data_communication_channel};
 
 use once_cell::sync::Lazy;
 use ordered_hash_map::OrderedHashMap;
@@ -7,53 +7,6 @@ use std::{collections::HashMap, sync::Mutex};
 use sorted_vec::SortedVec;
 
 static DATA_RACE: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
-
-static RECORD: Lazy<Mutex<HashMap<i64, Operation>>> =
-    Lazy::new(|| Mutex::new(HashMap::<i64, Operation>::new()));
-
-static NODE_LIST: Lazy<Mutex<SortedVec<i64>>> = Lazy::new(|| Mutex::new(SortedVec::<i64>::new()));
-
-static PARENT_CHILD_MAP: Lazy<Mutex<OrderedHashMap<i64, Vec<i64>>>> =
-    Lazy::new(|| Mutex::new(OrderedHashMap::<i64, Vec<i64>>::new()));
-
-static CHILD_PARENT_MAP: Lazy<Mutex<OrderedHashMap<i64, Vec<i64>>>> =
-    Lazy::new(|| Mutex::new(OrderedHashMap::<i64, Vec<i64>>::new()));
-
-pub fn global_add_parent_child_relationship(parent: i64, children: Vec<i64>) {
-    let mut child_map = CHILD_PARENT_MAP.lock().unwrap();
-
-    for child in &children {
-        if !child_map.contains_key(child) {
-            child_map.insert(*child, vec![parent]);
-        } else {
-            if let Some(parents) = child_map.get_mut(child) {
-                parents.push(parent);
-            }
-        }
-    }
-
-    let mut parent_map = PARENT_CHILD_MAP.lock().unwrap();
-    if !parent_map.contains_key(&parent) {
-        parent_map.insert(parent, children);
-    }
-}
-
-pub fn global_register_operation(op: Operation) {
-    let mut record = RECORD.lock().unwrap();
-    let id = match op {
-        Operation::Add(id, _, _, _, _)
-        | Operation::Sub(id, _, _, _, _)
-        | Operation::Mul(id, _, _, _, _)
-        | Operation::Div(id, _, _, _, _)
-        | Operation::Ln(id, _, _, _)
-        | Operation::Sin(id, _, _, _)
-        | Operation::Exp(id, _, _, _)
-        | Operation::Value(id, _, _) => id,
-    };
-    record.insert(id, op);
-    let mut node_list = NODE_LIST.lock().unwrap();
-    node_list.push(id);
-}
 
 #[derive(Debug, Clone)]
 pub struct AutomaticDifferentiator {
@@ -78,27 +31,20 @@ impl AutomaticDifferentiator {
     where
         F: Fn(Vec<Number>) -> Number,
     {
-        // Lock to avoid data races. Effectively serializes calls to forward_evaluate.
+        // Lock to avoid data races. Effectively serializes calls to forward_evaluate across all instances of AutomaticDifferentiator
         let _lock = DATA_RACE.lock().unwrap();
 
         // Run forward evaluate. This does not require much compute.
         let eval_res = func(arguments);
 
         // take local copy from which everything else is evaluated
-        let mut global_record = RECORD.lock().unwrap();
-        self.record = global_record.clone();
-        let mut global_node_list = NODE_LIST.lock().unwrap();
-        self.node_list = global_node_list.clone();
-        let mut global_parent_child_map = PARENT_CHILD_MAP.lock().unwrap();
-        self.parent_child_map = global_parent_child_map.clone();
-        let mut global_child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
-        self.child_parent_map = global_child_parent_map.clone();
+        self.record = shared_data_communication_channel::global_record_clone();
+        self.node_list = shared_data_communication_channel::global_node_list_clone();
+        self.parent_child_map = shared_data_communication_channel::global_parent_child_map_clone();
+        self.child_parent_map = shared_data_communication_channel::global_child_parent_map_clone();
 
-        // clear global data after use, before release of lock
-        global_record.clear();
-        global_node_list.clear();
-        global_parent_child_map.clear();
-        global_child_parent_map.clear();
+        // clear communications channel after use, before releasing data race lock
+        shared_data_communication_channel::global_clear();
 
         eval_res
     }

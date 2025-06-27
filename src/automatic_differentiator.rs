@@ -307,6 +307,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
 
 #[cfg(test)]
 mod automatic_differentiator_tests {
+    // tests verified with https://www.derivative-calculator.net/
     use super::*;
 
     #[test]

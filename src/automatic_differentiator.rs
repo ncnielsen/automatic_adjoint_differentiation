@@ -6,6 +6,8 @@ use std::{collections::HashMap, sync::Mutex};
 
 use sorted_vec::SortedVec;
 
+static DATA_RACE: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
+
 static RECORD: Lazy<Mutex<HashMap<i64, Operation>>> =
     Lazy::new(|| Mutex::new(HashMap::<i64, Operation>::new()));
 
@@ -17,7 +19,7 @@ static PARENT_CHILD_MAP: Lazy<Mutex<OrderedHashMap<i64, Vec<i64>>>> =
 static CHILD_PARENT_MAP: Lazy<Mutex<OrderedHashMap<i64, Vec<i64>>>> =
     Lazy::new(|| Mutex::new(OrderedHashMap::<i64, Vec<i64>>::new()));
 
-pub fn add_parent_child_relationship(parent: i64, children: Vec<i64>) {
+pub fn global_add_parent_child_relationship(parent: i64, children: Vec<i64>) {
     let mut child_map = CHILD_PARENT_MAP.lock().unwrap();
 
     for child in &children {
@@ -36,7 +38,7 @@ pub fn add_parent_child_relationship(parent: i64, children: Vec<i64>) {
     }
 }
 
-pub fn register_operation(op: Operation) {
+pub fn global_register_operation(op: Operation) {
     let mut record = RECORD.lock().unwrap();
     let id = match op {
         Operation::Add(id, _, _, _, _)
@@ -54,32 +56,61 @@ pub fn register_operation(op: Operation) {
 }
 
 #[derive(Debug, Clone)]
-pub struct AutomaticDifferentiator {}
+pub struct AutomaticDifferentiator {
+    record: HashMap<i64, Operation>,
+    node_list: SortedVec<i64>,
+    parent_child_map: OrderedHashMap<i64, Vec<i64>>,
+    child_parent_map: OrderedHashMap<i64, Vec<i64>>,
+}
 
 impl AutomaticDifferentiator {
     pub fn new() -> Self {
-        AutomaticDifferentiator {}
+        let ad = AutomaticDifferentiator {
+            record: HashMap::new(),
+            node_list: SortedVec::new(),
+            parent_child_map: OrderedHashMap::new(),
+            child_parent_map: OrderedHashMap::new(),
+        };
+        ad
     }
 
-    pub fn forward_evaluate<F>(&self, func: F, arguments: Vec<Number>) -> Number
+    pub fn forward_evaluate<F>(&mut self, func: F, arguments: Vec<Number>) -> Number
     where
         F: Fn(Vec<Number>) -> Number,
     {
-        func(arguments)
+        // Lock to avoid data races. Effectively serializes calls to forward_evaluate.
+        let _lock = DATA_RACE.lock().unwrap();
+
+        // Run forward evaluate. This does not require much compute.
+        let eval_res = func(arguments);
+
+        // take local copy from which everything else is evaluated
+        let mut global_record = RECORD.lock().unwrap();
+        self.record = global_record.clone();
+        let mut global_node_list = NODE_LIST.lock().unwrap();
+        self.node_list = global_node_list.clone();
+        let mut global_parent_child_map = PARENT_CHILD_MAP.lock().unwrap();
+        self.parent_child_map = global_parent_child_map.clone();
+        let mut global_child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
+        self.child_parent_map = global_child_parent_map.clone();
+
+        // clear global data after use, before release of lock
+        global_record.clear();
+        global_node_list.clear();
+        global_parent_child_map.clear();
+        global_child_parent_map.clear();
+
+        eval_res
     }
 
-    pub fn reverse_propagate_adjoints(&self) {
+    pub fn reverse_propagate_adjoints(&mut self) {
         print!("Running reverse mode adjoint propagation");
-        let node_list = NODE_LIST.lock().unwrap();
-        let child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
-
-        let mut record = RECORD.lock().unwrap();
 
         // Set adjoint of f() = y to 1.0. i.e. set value of the last entry to 1.0.
-        if let Some(last_id) = node_list.last() {
+        if let Some(last_id) = self.node_list.last() {
             println!("Setting adjoint to 1.0 for id {}", last_id);
 
-            if let Some(rec) = record.get_mut(last_id) {
+            if let Some(rec) = self.record.get_mut(last_id) {
                 match rec {
                     Operation::Add(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Sub(_, _, _, _, adjoint) => *adjoint = 1.0,
@@ -94,10 +125,10 @@ impl AutomaticDifferentiator {
         }
 
         // Reverse through the rest of the nodes, except the last which has already been set to 1.0
-        for node_map_entry in node_list.iter().rev().skip(1) {
+        for node_map_entry in self.node_list.iter().rev().skip(1) {
             // Implement the adjoint equation
             let mut adjoint = 0.0;
-            if let Some(node) = record.get(node_map_entry) {
+            if let Some(node) = self.record.get(node_map_entry) {
                 let node_id = match node {
                     Operation::Add(id, _lhs_id, _rhs_id, _res, _adj) => id,
                     Operation::Sub(id, _lhs_id, _rhs_id, _res, _adj) => id,
@@ -110,9 +141,9 @@ impl AutomaticDifferentiator {
                 };
 
                 println!("Calculating adjoint for node Vi with id {}", node_id);
-                if let Some(parents) = child_parent_map.get(&node_id) {
+                if let Some(parents) = self.child_parent_map.get(&node_id) {
                     for parent in parents {
-                        if let Some(parent_operation) = record.get(&parent) {
+                        if let Some(parent_operation) = self.record.get(&parent) {
                             match parent_operation {
                                 // lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
                                 // rhs_ = parent_ * Dparent/Drhs = parent_ * 1
@@ -141,7 +172,7 @@ impl AutomaticDifferentiator {
                                 Operation::Mul(id, lhs_id, rhs_id, _res, adj) => {
                                     // lhs_ = parent_ * Dparent/Dlhs = parent_ * rhs
                                     if node_id == lhs_id {
-                                        if let Some(rhs) = record.get(rhs_id) {
+                                        if let Some(rhs) = self.record.get(rhs_id) {
                                             let rhs = get_res_from_operation(&rhs);
                                             adjoint += adj * rhs;
                                         }
@@ -149,7 +180,7 @@ impl AutomaticDifferentiator {
 
                                     // rhs_ = parent_ * Dparent/Drhs = parent_ * lhs
                                     if node_id == rhs_id {
-                                        if let Some(lhs) = record.get(lhs_id) {
+                                        if let Some(lhs) = self.record.get(lhs_id) {
                                             let lhs = get_res_from_operation(&lhs);
                                             adjoint += adj * lhs;
                                         }
@@ -162,7 +193,7 @@ impl AutomaticDifferentiator {
                                 Operation::Div(id, num_id, den_id, _res, adj) => {
                                     // num_ = parent_ * Dparent/Dnum = parent_ * 1/den
                                     if node_id == num_id {
-                                        if let Some(den) = record.get(den_id) {
+                                        if let Some(den) = self.record.get(den_id) {
                                             let den = get_res_from_operation(&den);
                                             adjoint += adj * 1.0 / den;
                                         }
@@ -170,8 +201,8 @@ impl AutomaticDifferentiator {
 
                                     // den_ = parent_ * Dparent/Dden = parent_ * -1 * (num/den^2)
                                     if node_id == den_id {
-                                        if let Some(num) = record.get(num_id) {
-                                            if let Some(den) = record.get(den_id) {
+                                        if let Some(num) = self.record.get(num_id) {
+                                            if let Some(den) = self.record.get(den_id) {
                                                 let num = get_res_from_operation(&num);
                                                 let den = get_res_from_operation(&den);
                                                 adjoint += adj * -1.0 * (num / (den * den));
@@ -186,7 +217,7 @@ impl AutomaticDifferentiator {
 
                                 Operation::Ln(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * 1/arg
-                                    if let Some(arg) = record.get(arg_id) {
+                                    if let Some(arg) = self.record.get(arg_id) {
                                         let arg = get_res_from_operation(&arg);
                                         let arg_res = arg;
                                         adjoint += adj * (1.0 / arg_res);
@@ -198,7 +229,7 @@ impl AutomaticDifferentiator {
                                 }
                                 Operation::Sin(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * cos(arg)
-                                    if let Some(arg) = record.get(arg_id) {
+                                    if let Some(arg) = self.record.get(arg_id) {
                                         let arg = get_res_from_operation(&arg);
                                         adjoint += adj * arg.cos();
                                         println!(
@@ -229,7 +260,7 @@ impl AutomaticDifferentiator {
             }
 
             // update adjoint of record with node_id
-            if let Some(node) = record.get_mut(node_map_entry) {
+            if let Some(node) = self.record.get_mut(node_map_entry) {
                 match node {
                     Operation::Add(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
                     Operation::Sub(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
@@ -245,26 +276,73 @@ impl AutomaticDifferentiator {
     }
 
     pub fn get_differentials(&self) -> Vec<Operation> {
-        let record = RECORD.lock().unwrap();
-        record
+        self.record
             .values()
             .filter(|op| matches!(op, Operation::Value(_, _, _)))
             .cloned()
             .collect()
     }
 
-    pub fn clear(&self) {
-        let mut record = RECORD.lock().unwrap();
-        record.clear();
+    pub fn print_parent_map(&self) {
+        for kv in self.parent_child_map.iter() {
+            if let Some(rec) = self.record.get(kv.0) {
+                println!("{0}", rec);
+            }
+        }
+    }
 
-        let mut node_list = NODE_LIST.lock().unwrap();
-        node_list.clear();
+    pub fn print_parent_map_id(&self) {
+        for kv in self.parent_child_map.iter() {
+            let children: Vec<String> = kv.1.iter().map(|x| x.to_string()).collect();
+            println!("parent {0}. Children: {1}", kv.0, children.join(", "));
+        }
+    }
 
-        let mut parent_child_map = PARENT_CHILD_MAP.lock().unwrap();
-        parent_child_map.clear();
+    pub fn print_child_map_id(&self) {
+        for kv in self.child_parent_map.iter() {
+            let children: Vec<String> = kv.1.iter().map(|x| x.to_string()).collect();
+            println!("Child {0}. Parent: {1}", kv.0, children.join(", "));
+        }
+    }
 
-        let mut child_parent_map = CHILD_PARENT_MAP.lock().unwrap();
-        child_parent_map.clear();
+    pub fn print_record_collection(&self) {
+        for kv in self.record.iter() {
+            println!("{0}", kv.1);
+        }
+    }
+
+    pub fn print_record_collection_value_operations(&self) {
+        let value_operations = self
+            .record
+            .iter()
+            .filter(|(_, op)| matches!(op, Operation::Value(_, _, _)));
+        for (_, op) in value_operations {
+            println!("{0}", op);
+        }
+    }
+
+    pub fn print_differentials(&self, args: Vec<Number>) {
+        let differentials = self.get_differentials();
+        let adjoints: Vec<(i64, f64, f64)> = differentials
+            .iter()
+            .map(|op| match op {
+                Operation::Value(id, res, adj) => (*id, *res, *adj),
+                _ => (0, 0.0, 0.0),
+            })
+            .collect();
+
+        for arg in args {
+            let diff = adjoints
+                .iter()
+                .filter(|x| x.0 == arg.id)
+                .map(|x| x.2)
+                .next()
+                .unwrap();
+            print!(
+                "Argument with id {} and Value {} has differential {}",
+                arg.id, arg.result, diff
+            );
+        }
     }
 }
 
@@ -281,61 +359,13 @@ fn get_res_from_operation(op: &Operation) -> f64 {
     }
 }
 
-pub fn print_parent_map() {
-    let parent_map = PARENT_CHILD_MAP.lock().unwrap();
-    let record = RECORD.lock().unwrap();
-
-    for kv in parent_map.iter() {
-        if let Some(rec) = record.get(kv.0) {
-            println!("{0}", rec);
-        }
-    }
-}
-
-pub fn print_parent_map_id() {
-    let parent_map = PARENT_CHILD_MAP.lock().unwrap();
-
-    for kv in parent_map.iter() {
-        let children: Vec<String> = kv.1.iter().map(|x| x.to_string()).collect();
-        println!("parent {0}. Children: {1}", kv.0, children.join(", "));
-    }
-}
-
-pub fn print_child_map_id() {
-    let child_map = CHILD_PARENT_MAP.lock().unwrap();
-
-    for kv in child_map.iter() {
-        let children: Vec<String> = kv.1.iter().map(|x| x.to_string()).collect();
-        println!("Child {0}. Parent: {1}", kv.0, children.join(", "));
-    }
-}
-
-pub fn print_record_collection() {
-    let record = RECORD.lock().unwrap();
-
-    for kv in record.iter() {
-        println!("{0}", kv.1);
-    }
-}
-
-pub fn print_record_collection_value_operations() {
-    let record = RECORD.lock().unwrap();
-
-    let value_operations = record
-        .iter()
-        .filter(|(_, op)| matches!(op, Operation::Value(_, _, _)));
-    for (_, op) in value_operations {
-        println!("{0}", op);
-    }
-}
-
 #[cfg(test)]
 mod automatic_differentiator_tests {
     use super::*;
 
     #[test]
     fn test_operators_add_mul_ln() {
-        let automatic_differentiator = AutomaticDifferentiator::new();
+        let mut automatic_differentiator = AutomaticDifferentiator::new();
 
         let x1 = Number::new(1.0);
         let x2 = Number::new(2.0);
@@ -408,7 +438,7 @@ mod automatic_differentiator_tests {
 
     #[test]
     fn test_operators_sub_sin_div() {
-        let automatic_differentiator = AutomaticDifferentiator::new();
+        let mut automatic_differentiator = AutomaticDifferentiator::new();
 
         let x1 = Number::new(1.5);
         let x2 = Number::new(0.5);

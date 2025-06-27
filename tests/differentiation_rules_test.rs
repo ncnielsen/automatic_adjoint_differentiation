@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use aad::automatic_differentiator::AutomaticDifferentiator;
 use aad::number::Number;
 use aad::operation::Operation;
@@ -123,4 +125,44 @@ fn test_operators_sub_sin_div() {
     assert!(forward_eval.result - 2.017 < epsilon);
     assert!(x1 - 3.0118433276739069 < epsilon);
     assert!(x2 - (-13.723961509314076) < epsilon);
+}
+
+#[test]
+fn test_operators_cos_exp() {
+    let mut automatic_differentiator = AutomaticDifferentiator::new();
+
+    let x1 = Number::new(1.0);
+
+    let arguments = vec![x1];
+
+    fn f(args: Vec<Number>) -> Number {
+        let x1 = args[0];
+
+        (x1.exp() + PI / 2.0).cos()
+    }
+
+    let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
+
+    automatic_differentiator.reverse_propagate_adjoints();
+    let differentials = automatic_differentiator.get_differentials();
+    assert_eq!(differentials.len(), 1);
+
+    let adjoints: Vec<(i64, f64, f64)> = differentials
+        .iter()
+        .map(|op| match op {
+            Operation::Value(id, res, adj) => (*id, *res, *adj),
+            _ => (0, 0.0, 0.0),
+        })
+        .collect();
+
+    let x1 = adjoints
+        .iter()
+        .filter(|x| x.0 == x1.id)
+        .map(|x| x.2)
+        .next()
+        .unwrap();
+
+    let epsilon = 1e-10;
+    assert!(forward_eval.result - (-0.41078) < epsilon);
+    assert!(x1 - 2.478350 < epsilon);
 }

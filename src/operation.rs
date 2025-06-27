@@ -8,6 +8,7 @@ pub enum Operation {
     Div(i64, i64, i64, f64, f64), // id, num_id, den_id, result, adjoint
     Ln(i64, i64, f64, f64),       // id, arg_id, result, adjoint
     Sin(i64, i64, f64, f64),      // id, arg_id, result, adjoint
+    Cos(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Exp(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
@@ -69,6 +70,13 @@ impl Display for Operation {
                 write!(
                     f,
                     "id {}: Sin(arg_id: {}, res:{}, adjoint {})",
+                    id, arg_id, result, adjoint
+                )
+            }
+            Operation::Cos(id, arg_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Cos(arg_id: {}, res:{}, adjoint {})",
                     id, arg_id, result, adjoint
                 )
             }

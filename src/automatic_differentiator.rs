@@ -207,16 +207,13 @@ impl AutomaticDifferentiator {
                                         node_id, adjoint, id
                                     );
                                 }
-                                Operation::Pow(id, base_id, exp, res, adj) => {
+                                Operation::Pow(id, _base_id, exp, res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * exp * res ^ (exp -1)
-                                    if let Some(base) = self.record.get(base_id) {
-                                        let base = get_res_from_operation(&base);
-                                        adjoint += adj * exp * res.powf(exp - 1.0);
-                                        println!(
-                                            "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
-                                        );
-                                    }
+                                    adjoint += adj * exp * res.powf(exp - 1.0);
+                                    println!(
+                                        "node with id {} has adjoint {}. ParentId: {}",
+                                        node_id, adjoint, id
+                                    );
                                 }
                                 Operation::Value(id, _res, adj) => {
                                     adjoint += adj;

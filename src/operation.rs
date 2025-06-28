@@ -88,10 +88,10 @@ impl Display for Operation {
                     id, arg_id, result, adjoint
                 )
             }
-            Operation::Pow(id, base_id, exp, result, adjoint) => {
+            Operation::Pow(id, base_id, _exp, result, adjoint) => {
                 write!(
                     f,
-                    "id {}: Pow(arg_id: {}, res:{}, adjoint {})",
+                    "id {}: Pow(arg_id: {}, res: {}, adjoint {})",
                     id, base_id, result, adjoint
                 )
             }

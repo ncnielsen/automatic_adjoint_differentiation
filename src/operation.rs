@@ -10,6 +10,7 @@ pub enum Operation {
     Sin(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Cos(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Exp(i64, i64, f64, f64),      // id, arg_id, result, adjoint
+    Pow(i64, i64, f64, f64, f64), // id, base_id, exp, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
 
@@ -85,6 +86,13 @@ impl Display for Operation {
                     f,
                     "id {}: Exp(arg_id: {}, res:{}, adjoint {})",
                     id, arg_id, result, adjoint
+                )
+            }
+            Operation::Pow(id, base_id, exp, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Pow(arg_id: {}, res:{}, adjoint {})",
+                    id, base_id, result, adjoint
                 )
             }
             Operation::Value(id, value, adjoint) => {

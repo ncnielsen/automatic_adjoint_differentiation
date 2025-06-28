@@ -66,6 +66,7 @@ impl AutomaticDifferentiator {
                     Operation::Sin(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Cos(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Exp(_, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Pow(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
             }
@@ -85,6 +86,7 @@ impl AutomaticDifferentiator {
                     Operation::Sin(id, _arg_id, _res, _adj) => id,
                     Operation::Cos(id, _arg_id, _res, _adj) => id,
                     Operation::Exp(id, _arg_id, _res, _adj) => id,
+                    Operation::Pow(id, _base_id, _exp, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
                 };
 
@@ -205,6 +207,17 @@ impl AutomaticDifferentiator {
                                         node_id, adjoint, id
                                     );
                                 }
+                                Operation::Pow(id, base_id, exp, res, adj) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * exp * res ^ (exp -1)
+                                    if let Some(base) = self.record.get(base_id) {
+                                        let base = get_res_from_operation(&base);
+                                        adjoint += adj * exp * res.powf(exp - 1.0);
+                                        println!(
+                                            "node with id {} has adjoint {}. ParentId: {}",
+                                            node_id, adjoint, id
+                                        );
+                                    }
+                                }
                                 Operation::Value(id, _res, adj) => {
                                     adjoint += adj;
                                     println!(
@@ -229,6 +242,7 @@ impl AutomaticDifferentiator {
                     Operation::Sin(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Cos(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Exp(_id, _arg_id, _res, adj) => *adj += adjoint,
+                    Operation::Pow(_id, _base_id, _exp, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
             }
@@ -316,6 +330,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
         Operation::Sin(_, _, res, _) => *res,
         Operation::Cos(_, _, res, _) => *res,
         Operation::Exp(_, _, res, _) => *res,
+        Operation::Pow(_, _, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,
     }
 }

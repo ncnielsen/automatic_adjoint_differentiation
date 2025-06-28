@@ -66,13 +66,9 @@ impl Add<f64> for Number {
     type Output = Number;
 
     fn add(self, rhs: f64) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self.result + rhs);
-        if self.leaf {
-            let val_op = Operation::Value(self.id, self.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-
-        result
+        // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let rhs = Number::new_non_leaf(rhs);
+        return self.add(rhs);
     }
 }
 
@@ -80,13 +76,9 @@ impl Add<Number> for f64 {
     type Output = Number;
 
     fn add(self, rhs: Number) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self + rhs.result);
-
-        if rhs.leaf {
-            let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-        result
+        // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let lhs = Number::new_non_leaf(self);
+        return lhs.add(rhs);
     }
 }
 
@@ -119,14 +111,9 @@ impl Sub<f64> for Number {
     type Output = Number;
 
     fn sub(self, rhs: f64) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self.result - rhs);
-
-        if self.leaf {
-            let val_op = Operation::Value(self.id, self.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-
-        result
+        // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let rhs = Number::new_non_leaf(rhs);
+        return self.add(rhs);
     }
 }
 
@@ -134,13 +121,9 @@ impl Sub<Number> for f64 {
     type Output = Number;
 
     fn sub(self, rhs: Number) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self - rhs.result);
-
-        if rhs.leaf {
-            let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-        result
+        // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let lhs = Number::new_non_leaf(self);
+        return lhs.add(rhs);
     }
 }
 
@@ -173,13 +156,9 @@ impl Mul<f64> for Number {
     type Output = Number;
 
     fn mul(self, rhs: f64) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self.result * rhs);
-        if self.leaf {
-            let val_op = Operation::Value(self.id, self.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-
-        result
+        // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let rhs = Number::new_non_leaf(rhs);
+        return self.add(rhs);
     }
 }
 
@@ -187,14 +166,9 @@ impl Mul<Number> for f64 {
     type Output = Number;
 
     fn mul(self, rhs: Number) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self * rhs.result);
-
-        if rhs.leaf {
-            let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-
-        result
+        // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let lhs = Number::new_non_leaf(self);
+        return lhs.add(rhs);
     }
 }
 
@@ -228,14 +202,9 @@ impl Div<f64> for Number {
     type Output = Number;
 
     fn div(self, rhs: f64) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self.result / rhs);
-
-        if self.leaf {
-            let val_op = Operation::Value(self.id, self.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-
-        result
+        // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let rhs = Number::new_non_leaf(rhs);
+        return self.add(rhs);
     }
 }
 
@@ -243,14 +212,9 @@ impl Div<Number> for f64 {
     type Output = Number;
 
     fn div(self, rhs: Number) -> Self::Output {
-        let result: Number = Number::new_non_leaf(self / rhs.result);
-
-        if rhs.leaf {
-            let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
-            shared_data_communication_channel::global_register_operation(val_op);
-        }
-
-        result
+        // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
+        let lhs = Number::new_non_leaf(self);
+        return lhs.add(rhs);
     }
 }
 
@@ -309,6 +273,23 @@ impl Number {
     pub fn exp(self) -> Number {
         let result: Number = Number::new_non_leaf(self.result.exp());
         let op = Operation::Exp(result.id, self.id, result.result, 0.0);
+        shared_data_communication_channel::global_register_operation(op);
+        shared_data_communication_channel::global_add_parent_child_relationship(
+            result.id,
+            vec![self.id],
+        );
+
+        if self.leaf {
+            let val_op = Operation::Value(self.id, self.result, 0.0);
+            shared_data_communication_channel::global_register_operation(val_op);
+        }
+
+        result
+    }
+
+    pub fn pow(self, n: f64) -> Number {
+        let result: Number = Number::new_non_leaf(self.result.powf(n));
+        let op = Operation::Pow(result.id, self.id, n, result.result, 0.0);
         shared_data_communication_channel::global_register_operation(op);
         shared_data_communication_channel::global_add_parent_child_relationship(
             result.id,

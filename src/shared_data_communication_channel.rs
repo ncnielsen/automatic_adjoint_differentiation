@@ -46,6 +46,7 @@ pub fn global_register_operation(op: Operation) {
         | Operation::Sin(id, _, _, _)
         | Operation::Cos(id, _, _, _)
         | Operation::Exp(id, _, _, _)
+        | Operation::Pow(id, _, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
     record.insert(id, op);

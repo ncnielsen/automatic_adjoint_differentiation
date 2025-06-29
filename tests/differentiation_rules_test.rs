@@ -25,60 +25,55 @@ fn test_operators_add_mul_ln() {
         y
     }
 
+    let arguments_clone = arguments.clone();
     let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
-    automatic_differentiator.reverse_propagate_adjoints();
-    let differentials = automatic_differentiator.get_differentials();
+    let derivatives = automatic_differentiator.derivatives(&arguments_clone);
 
-    // TODO
-    //assert_eq!(differentials.len(), 5);
+    assert_eq!(derivatives.len(), arguments_clone.len());
 
-    let adjoints: Vec<(i64, f64, f64)> = differentials
+    let x1_adjoint = derivatives
         .iter()
-        .map(|op| match op {
-            Operation::Value(id, res, adj) => (*id, *res, *adj),
-            _ => (0, 0.0, 0.0),
-        })
-        .collect();
+        .filter(|x| x.0.id == x1.id)
+        .map(|x| x.1)
+        .next()
+        .unwrap();
 
-    let x1 = adjoints
+    let x2_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x1.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x2.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
-    let x2 = adjoints
+
+    let x3_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x2.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x3.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
-    let x3 = adjoints
+
+    let x4_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x3.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x4.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
-    let x4 = adjoints
+
+    let x5_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x4.id)
-        .map(|x| x.2)
-        .next()
-        .unwrap();
-    let x5 = adjoints
-        .iter()
-        .filter(|x| x.0 == x5.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x5.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
 
     let epsilon = 1e-10;
     assert!(forward_eval.result - 797.75132345616487 < epsilon);
-    assert!(x1 - 950.7364539019619 < epsilon);
-    assert!(x2 - 190.14729078039238 < epsilon);
-    assert!(x3 - 443.6770118209156 < epsilon);
-    assert!(x4 - 73.20408806599326 < epsilon);
-    assert!(x5 - 190.14729078039238 < epsilon);
+    assert!(x1_adjoint - 950.7364539019619 < epsilon);
+    assert!(x2_adjoint - 190.14729078039238 < epsilon);
+    assert!(x3_adjoint - 443.6770118209156 < epsilon);
+    assert!(x4_adjoint - 73.20408806599326 < epsilon);
+    assert!(x5_adjoint - 190.14729078039238 < epsilon);
 }
 
 #[test]
@@ -97,38 +92,32 @@ fn test_operators_sub_sin_div() {
         (frac.sin() + frac - x2.exp()) * (frac - x2.exp())
     }
 
+    let arguments_clone = arguments.clone();
     let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
-    automatic_differentiator.reverse_propagate_adjoints();
-    let differentials = automatic_differentiator.get_differentials();
+    let derivatives = automatic_differentiator.derivatives(&arguments_clone);
 
-    // TODO
-    // assert_eq!(differentials.len(), 2);
+    assert_eq!(derivatives.len(), arguments_clone.len());
 
-    let adjoints: Vec<(i64, f64, f64)> = differentials
+    let x1_adjoint = derivatives
         .iter()
-        .map(|op| match op {
-            Operation::Value(id, res, adj) => (*id, *res, *adj),
-            _ => (0, 0.0, 0.0),
-        })
-        .collect();
-
-    let x1 = adjoints
-        .iter()
-        .filter(|x| x.0 == x1.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x1.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
-    let x2 = adjoints
+
+    let x2_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x2.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x2.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
+
     let epsilon = 1e-10;
+
     assert!(forward_eval.result - 2.017 < epsilon);
-    assert!(x1 - 3.0118433276739069 < epsilon);
-    assert!(x2 - (-13.723961509314076) < epsilon);
+    assert!(x1_adjoint - 3.0118433276739069 < epsilon);
+    assert!(x2_adjoint - (-13.723961509314076) < epsilon);
 }
 
 #[test]
@@ -145,32 +134,24 @@ fn test_operators_cos_exp() {
         (x1.exp() + PI / 2.0).cos()
     }
 
+    let arguments_clone = arguments.clone();
     let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
-    automatic_differentiator.reverse_propagate_adjoints();
-    let differentials = automatic_differentiator.get_differentials();
+    let derivatives = automatic_differentiator.derivatives(&arguments_clone);
 
-    // TODO
-    // assert_eq!(differentials.len(), 1);
+    assert_eq!(derivatives.len(), arguments_clone.len());
 
-    let adjoints: Vec<(i64, f64, f64)> = differentials
+    let x1_adjoint = derivatives
         .iter()
-        .map(|op| match op {
-            Operation::Value(id, res, adj) => (*id, *res, *adj),
-            _ => (0, 0.0, 0.0),
-        })
-        .collect();
-
-    let x1 = adjoints
-        .iter()
-        .filter(|x| x.0 == x1.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x1.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
 
     let epsilon = 1e-10;
+
     assert!(forward_eval.result - (-0.41078) < epsilon);
-    assert!(x1 - 2.478350 < epsilon);
+    assert!(x1_adjoint - 2.478350 < epsilon);
 }
 
 #[test]
@@ -187,31 +168,23 @@ fn test_operators_cos_pow() {
         (x1.pow(5.0) + PI / 2.0).cos()
     }
 
+    let arguments_clone = arguments.clone();
     let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
-    automatic_differentiator.reverse_propagate_adjoints();
-    let differentials = automatic_differentiator.get_differentials();
-    // TODO
-    // assert_eq!(differentials.len(), 1);
+    let derivatives = automatic_differentiator.derivatives(&arguments_clone);
 
-    let adjoints: Vec<(i64, f64, f64)> = differentials
-        .iter()
-        .map(|op| match op {
-            Operation::Value(id, res, adj) => (*id, *res, *adj),
-            _ => (0, 0.0, 0.0),
-        })
-        .collect();
+    assert_eq!(derivatives.len(), arguments_clone.len());
 
-    let x1 = adjoints
+    let x1_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x1.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x1.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
 
     let epsilon = 1e-10;
     assert!(forward_eval.result - (0.841471) < epsilon);
-    assert!(x1 - (-2.70151) < epsilon);
+    assert!(x1_adjoint - (-2.70151) < epsilon);
 }
 
 #[test]
@@ -233,25 +206,17 @@ fn test_operators_sin_sqrt_exp() {
         (((x1.exp() + PI).sqrt()) / 2.0).sin()
     }
 
+    let arguments_clone = arguments.clone();
     let forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
 
-    automatic_differentiator.reverse_propagate_adjoints();
-    let differentials = automatic_differentiator.get_differentials();
-    // TODO
-    //assert_eq!(differentials.len(), 1);
+    let derivatives = automatic_differentiator.derivatives(&arguments_clone);
 
-    let adjoints: Vec<(i64, f64, f64)> = differentials
-        .iter()
-        .map(|op| match op {
-            Operation::Value(id, res, adj) => (*id, *res, *adj),
-            _ => (0, 0.0, 0.0),
-        })
-        .collect();
+    assert_eq!(derivatives.len(), arguments_clone.len());
 
-    let x1_adjoint = adjoints
+    let x1_adjoint = derivatives
         .iter()
-        .filter(|x| x.0 == x1.id)
-        .map(|x| x.2)
+        .filter(|x| x.0.id == x1.id)
+        .map(|x| x.1)
         .next()
         .unwrap();
 
@@ -259,5 +224,4 @@ fn test_operators_sin_sqrt_exp() {
 
     assert!(forward_eval.result - (-0.12745886733521275) < epsilon);
     assert!(x1_adjoint - 2.989310 < epsilon);
-    let y = 1;
 }

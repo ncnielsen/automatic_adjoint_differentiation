@@ -63,10 +63,12 @@ fn main() {
     //println!("printing parent map after forward evaluation");
     //automatic_differentiator.print_parent_map_id();
 
-    automatic_differentiator.reverse_propagate_adjoints();
+    let derivatives = automatic_differentiator.derivatives(&arg_clone);
 
-    println!("Differentials");
-    automatic_differentiator.print_differentials(arg_clone);
+    println!("Printing derivatives: ");
+    for derivative in derivatives {
+        println!("Input {} has derivative {}", derivative.0, derivative.1)
+    }
 
     println!("Printing child map after back propagation");
     automatic_differentiator.print_child_map_id();

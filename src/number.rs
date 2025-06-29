@@ -341,6 +341,6 @@ impl Number {
 
 impl Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{{{:.3} }}", self.result)
+        write!(f, "(Id {}, Value {})", self.id, self.result)
     }
 }

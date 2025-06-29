@@ -49,7 +49,7 @@ impl AutomaticDifferentiator {
         eval_res
     }
 
-    pub fn reverse_propagate_adjoints(&mut self) {
+    fn reverse_propagate_adjoints(&mut self) {
         print!("Running reverse mode adjoint propagation");
 
         // Set adjoint of f() = y to 1.0. i.e. set value of the last entry to 1.0.
@@ -261,11 +261,20 @@ impl AutomaticDifferentiator {
         }
     }
 
-    pub fn get_differentials(&self) -> Vec<Operation> {
-        self.record
-            .values()
-            .filter(|op| matches!(op, Operation::Value(_, _, _)))
-            .cloned()
+    pub fn derivatives(&mut self, arguments: &Vec<Number>) -> Vec<(Number, f64)> {
+        self.reverse_propagate_adjoints();
+
+        arguments
+            .iter()
+            .filter_map(|arg| {
+                self.record.get(&arg.id).and_then(|op| {
+                    if let Operation::Value(_, _res, adj) = op {
+                        Some((arg.clone(), *adj))
+                    } else {
+                        None
+                    }
+                })
+            })
             .collect()
     }
 
@@ -304,30 +313,6 @@ impl AutomaticDifferentiator {
             .filter(|(_, op)| matches!(op, Operation::Value(_, _, _)));
         for (_, op) in value_operations {
             println!("{0}", op);
-        }
-    }
-
-    pub fn print_differentials(&self, args: Vec<Number>) {
-        let differentials = self.get_differentials();
-        let adjoints: Vec<(i64, f64, f64)> = differentials
-            .iter()
-            .map(|op| match op {
-                Operation::Value(id, res, adj) => (*id, *res, *adj),
-                _ => (0, 0.0, 0.0),
-            })
-            .collect();
-
-        for arg in args {
-            let diff = adjoints
-                .iter()
-                .filter(|x| x.0 == arg.id)
-                .map(|x| x.2)
-                .next()
-                .unwrap();
-            println!(
-                "Argument with id {} and Value {} has differential {}",
-                arg.id, arg.result, diff
-            );
         }
     }
 }

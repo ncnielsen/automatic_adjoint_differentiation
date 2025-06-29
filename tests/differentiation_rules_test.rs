@@ -4,7 +4,8 @@ use aad::automatic_differentiator::{AutomaticDifferentiator, Evaluation};
 use aad::number::Number;
 use aad::operation::Operation;
 
-// tests verified with https://www.derivative-calculator.net/
+// Tests verified with https://www.derivative-calculator.net/
+// an exellent resource for playing around with functions and their derivatives.
 
 #[test]
 fn test_operators_add_mul_ln() {

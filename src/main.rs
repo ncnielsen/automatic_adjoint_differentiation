@@ -16,15 +16,27 @@ fn main() {
         (frac.sin() + frac - x2.exp()) * (frac - x2.exp())
     }
     */
+    /*
+        let x1 = Number::new(-1.0);
 
-    let x1 = Number::new(-1.0);
+        let arguments = vec![x1];
+
+        fn f(args: Vec<Number>) -> Number {
+            let x1 = args[0];
+
+            (x1.pow(5.0) + PI / 2.0).cos()
+        }
+    */
+
+    let x1 = Number::new(5.0);
 
     let arguments = vec![x1];
 
     fn f(args: Vec<Number>) -> Number {
+        //sin(sqrt(e^x+π))÷2)
         let x1 = args[0];
 
-        (x1.pow(5.0) + PI / 2.0).cos()
+        (((x1.exp() + PI).sqrt()) / 2.0).sin()
     }
 
     /*

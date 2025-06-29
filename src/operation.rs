@@ -11,6 +11,7 @@ pub enum Operation {
     Cos(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Exp(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Pow(i64, i64, f64, f64, f64), // id, base_id, exp, result, adjoint
+    Sqrt(i64, i64, f64, f64),     // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
 
@@ -93,6 +94,13 @@ impl Display for Operation {
                     f,
                     "id {}: Pow(arg_id: {}, res: {}, adjoint {})",
                     id, base_id, result, adjoint
+                )
+            }
+            Operation::Sqrt(id, arg_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Sqrt(arg_id: {}, res:{}, adjoint {})",
+                    id, arg_id, result, adjoint
                 )
             }
             Operation::Value(id, value, adjoint) => {

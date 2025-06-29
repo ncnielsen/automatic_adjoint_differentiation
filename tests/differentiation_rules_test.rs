@@ -1,8 +1,7 @@
 use std::f64::consts::PI;
 
-use aad::automatic_differentiator::{AutomaticDifferentiator, Evaluation};
+use aad::automatic_differentiator::AutomaticDifferentiator;
 use aad::number::Number;
-use aad::operation::Operation;
 
 // Tests verified with https://www.derivative-calculator.net/
 // an exellent resource for playing around with functions and their derivatives.

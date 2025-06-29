@@ -22,10 +22,8 @@ pub fn global_add_parent_child_relationship(parent: i64, children: Vec<i64>) {
     for child in &children {
         if !child_map.contains_key(child) {
             child_map.insert(*child, vec![parent]);
-        } else {
-            if let Some(parents) = child_map.get_mut(child) {
-                parents.push(parent);
-            }
+        } else if let Some(parents) = child_map.get_mut(child) {
+            parents.push(parent);
         }
     }
 

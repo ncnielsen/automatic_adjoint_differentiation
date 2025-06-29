@@ -24,8 +24,8 @@ pub struct AdjointUpdate {
 impl AdjointUpdate {
     pub fn new(operation_id: i64, updated_adjoint: f64) -> Self {
         AdjointUpdate {
-            operation_id: operation_id,
-            updated_adjoint: updated_adjoint,
+            operation_id,
+            updated_adjoint,
         }
     }
 }

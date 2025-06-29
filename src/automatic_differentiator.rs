@@ -28,15 +28,20 @@ pub struct AutomaticDifferentiator {
     child_parent_map: OrderedHashMap<i64, Vec<i64>>,
 }
 
+impl Default for AutomaticDifferentiator {
+    fn default() -> Self {
+        AutomaticDifferentiator::new()
+    }
+}
+
 impl AutomaticDifferentiator {
     pub fn new() -> Self {
-        let ad = AutomaticDifferentiator {
+        AutomaticDifferentiator {
             record: HashMap::new(),
             node_list: SortedVec::new(),
             parent_child_map: OrderedHashMap::new(),
             child_parent_map: OrderedHashMap::new(),
-        };
-        ad
+        }
     }
 
     pub fn derivatives<F>(&mut self, func: F, arguments: &Vec<Number>) -> Evaluation
@@ -51,21 +56,21 @@ impl AutomaticDifferentiator {
             .filter_map(|arg| {
                 self.record.get(&arg.id).and_then(|op| {
                     if let Operation::Value(_, _res, adj) = op {
-                        Some((arg.clone(), *adj))
+                        Some((arg, *adj))
                     } else {
                         None
                     }
                 })
             })
             .map(|der| Derivative {
-                input: der.0,
+                input: *der.0,
                 derivative: der.1,
             })
             .collect();
 
         Evaluation {
             result: forward_evalutation.result,
-            derivatives: derivatives,
+            derivatives,
         }
     }
 
@@ -77,7 +82,7 @@ impl AutomaticDifferentiator {
         let _lock = DATA_RACE.lock().unwrap();
 
         // Run forward evaluate. This does not require much compute.
-        let eval_res = func(&arguments);
+        let eval_res = func(arguments);
 
         // take local copy from which everything else is evaluated
         self.record = shared_data_communication_channel::global_record_clone();
@@ -135,9 +140,9 @@ impl AutomaticDifferentiator {
                 };
 
                 println!("Calculating adjoint for node Vi with id {}", node_id);
-                if let Some(parents) = self.child_parent_map.get(&node_id) {
+                if let Some(parents) = self.child_parent_map.get(node_id) {
                     for parent in parents {
-                        if let Some(parent_operation) = self.record.get(&parent) {
+                        if let Some(parent_operation) = self.record.get(parent) {
                             match parent_operation {
                                 // lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
                                 // rhs_ = parent_ * Dparent/Drhs = parent_ * 1
@@ -167,7 +172,7 @@ impl AutomaticDifferentiator {
                                     // lhs_ = parent_ * Dparent/Dlhs = parent_ * rhs
                                     if node_id == lhs_id {
                                         if let Some(rhs) = self.record.get(rhs_id) {
-                                            let rhs = get_res_from_operation(&rhs);
+                                            let rhs = get_res_from_operation(rhs);
                                             adjoint += adj * rhs;
                                         }
                                     }
@@ -175,7 +180,7 @@ impl AutomaticDifferentiator {
                                     // rhs_ = parent_ * Dparent/Drhs = parent_ * lhs
                                     if node_id == rhs_id {
                                         if let Some(lhs) = self.record.get(lhs_id) {
-                                            let lhs = get_res_from_operation(&lhs);
+                                            let lhs = get_res_from_operation(lhs);
                                             adjoint += adj * lhs;
                                         }
                                     }
@@ -188,7 +193,7 @@ impl AutomaticDifferentiator {
                                     // num_ = parent_ * Dparent/Dnum = parent_ * 1/den
                                     if node_id == num_id {
                                         if let Some(den) = self.record.get(den_id) {
-                                            let den = get_res_from_operation(&den);
+                                            let den = get_res_from_operation(den);
                                             adjoint += adj * 1.0 / den;
                                         }
                                     }
@@ -197,8 +202,8 @@ impl AutomaticDifferentiator {
                                     if node_id == den_id {
                                         if let Some(num) = self.record.get(num_id) {
                                             if let Some(den) = self.record.get(den_id) {
-                                                let num = get_res_from_operation(&num);
-                                                let den = get_res_from_operation(&den);
+                                                let num = get_res_from_operation(num);
+                                                let den = get_res_from_operation(den);
                                                 adjoint += adj * -1.0 * (num / (den * den));
                                             }
                                         }
@@ -224,7 +229,7 @@ impl AutomaticDifferentiator {
                                 Operation::Sin(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * cos(arg)
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(&arg);
+                                        let arg = get_res_from_operation(arg);
                                         adjoint += adj * arg.cos();
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
@@ -235,7 +240,7 @@ impl AutomaticDifferentiator {
                                 Operation::Cos(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * -sin(arg)
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(&arg);
+                                        let arg = get_res_from_operation(arg);
                                         adjoint += adj * -1.0 * arg.sin();
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
@@ -262,7 +267,7 @@ impl AutomaticDifferentiator {
                                 Operation::Sqrt(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * (1/ (2*sqrt(x))
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(&arg);
+                                        let arg = get_res_from_operation(arg);
 
                                         adjoint += adj * (1.0 / (2.0 * arg.sqrt()));
                                         println!(

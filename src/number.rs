@@ -19,20 +19,18 @@ pub struct Number {
 impl Number {
     pub fn new(val: f64) -> Self {
         let id = OPERATION_ID_COUNTER.inc();
-        let number = Number {
+        Number {
             result: val,
-            id: id,
+            id,
             leaf: true,
-        };
-
-        number
+        }
     }
 
     fn new_non_leaf(val: f64) -> Self {
         let id = OPERATION_ID_COUNTER.inc();
         Number {
             result: val,
-            id: id,
+            id,
             leaf: false,
         }
     }
@@ -70,7 +68,7 @@ impl Add<f64> for Number {
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return self.add(rhs);
+        self.add(rhs)
     }
 }
 
@@ -83,7 +81,7 @@ impl Add<Number> for f64 {
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
 
-        return lhs.add(rhs);
+        lhs.add(rhs)
     }
 }
 
@@ -120,7 +118,7 @@ impl Sub<f64> for Number {
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return self.sub(rhs);
+        self.sub(rhs)
     }
 }
 
@@ -132,7 +130,7 @@ impl Sub<Number> for f64 {
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return lhs.sub(rhs);
+        lhs.sub(rhs)
     }
 }
 
@@ -169,7 +167,7 @@ impl Mul<f64> for Number {
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return self.mul(rhs);
+        self.mul(rhs)
     }
 }
 
@@ -181,7 +179,7 @@ impl Mul<Number> for f64 {
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return lhs.mul(rhs);
+        lhs.mul(rhs)
     }
 }
 
@@ -219,7 +217,7 @@ impl Div<f64> for Number {
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return self.div(rhs);
+        self.div(rhs)
     }
 }
 
@@ -231,7 +229,7 @@ impl Div<Number> for f64 {
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
         shared_data_communication_channel::global_register_operation(val_op);
-        return lhs.div(rhs);
+        lhs.div(rhs)
     }
 }
 

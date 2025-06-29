@@ -9,7 +9,7 @@ fn main() {
     /*
     let arguments = vec![Number::new(1.5), Number::new(0.5)];
 
-    fn f(args: Vec<Number>) -> Number {
+    fn f(args: &Vec<Number>) -> Number {
         let x1 = args[0];
         let x2 = args[1];
         let frac = x1 / x2;
@@ -32,7 +32,7 @@ fn main() {
 
     let arguments = vec![x1];
 
-    fn f(args: Vec<Number>) -> Number {
+    fn f(args: &Vec<Number>) -> Number {
         //sin(sqrt(e^x+π))÷2)
         let x1 = args[0];
 
@@ -48,26 +48,22 @@ fn main() {
 
         let arguments = vec![x1, x2, x3, x4, x5];
 
-        fn f(args: Vec<Number>) -> Number {
+        fn f(args: &Vec<Number>) -> Number {
             let y1 = args[2] * (args[4] * args[0] + args[1]);
             let y2 = y1.ln();
             let y = (y1 + args[3] * y2) * (y1 + y2);
             y
         }
     */
-    let arg_clone = arguments.clone();
 
-    let _forward_eval = automatic_differentiator.forward_evaluate(f, arguments);
-
-    println!("forward eval {}", _forward_eval);
-    //println!("printing parent map after forward evaluation");
-    //automatic_differentiator.print_parent_map_id();
-
-    let derivatives = automatic_differentiator.derivatives(&arg_clone);
+    let evaluation = automatic_differentiator.derivatives(f, &arguments);
 
     println!("Printing derivatives: ");
-    for derivative in derivatives {
-        println!("Input {} has derivative {}", derivative.0, derivative.1)
+    for derivative in evaluation.derivatives {
+        println!(
+            "Input {} has derivative {}",
+            derivative.input, derivative.derivative
+        )
     }
 
     println!("Printing child map after back propagation");

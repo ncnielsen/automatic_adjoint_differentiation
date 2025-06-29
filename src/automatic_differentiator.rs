@@ -9,6 +9,18 @@ use sorted_vec::SortedVec;
 static DATA_RACE: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
 #[derive(Debug, Clone)]
+pub struct Evaluation {
+    pub result: f64,
+    pub derivatives: Vec<Derivative>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Derivative {
+    pub input: Number,
+    pub derivative: f64,
+}
+
+#[derive(Debug, Clone)]
 pub struct AutomaticDifferentiator {
     record: HashMap<i64, Operation>,
     node_list: SortedVec<i64>,
@@ -27,15 +39,45 @@ impl AutomaticDifferentiator {
         ad
     }
 
-    pub fn forward_evaluate<F>(&mut self, func: F, arguments: Vec<Number>) -> Number
+    pub fn derivatives<F>(&mut self, func: F, arguments: &Vec<Number>) -> Evaluation
     where
-        F: Fn(Vec<Number>) -> Number,
+        F: Fn(&Vec<Number>) -> Number,
+    {
+        let forward_evalutation = self.forward_evaluate(func, arguments);
+        self.reverse_propagate_adjoints();
+
+        let derivatives = arguments
+            .iter()
+            .filter_map(|arg| {
+                self.record.get(&arg.id).and_then(|op| {
+                    if let Operation::Value(_, _res, adj) = op {
+                        Some((arg.clone(), *adj))
+                    } else {
+                        None
+                    }
+                })
+            })
+            .map(|der| Derivative {
+                input: der.0,
+                derivative: der.1,
+            })
+            .collect();
+
+        Evaluation {
+            result: forward_evalutation.result,
+            derivatives: derivatives,
+        }
+    }
+
+    fn forward_evaluate<F>(&mut self, func: F, arguments: &Vec<Number>) -> Number
+    where
+        F: Fn(&Vec<Number>) -> Number,
     {
         // Lock to avoid data races. Effectively serializes calls to forward_evaluate across all instances of AutomaticDifferentiator
         let _lock = DATA_RACE.lock().unwrap();
 
         // Run forward evaluate. This does not require much compute.
-        let eval_res = func(arguments);
+        let eval_res = func(&arguments);
 
         // take local copy from which everything else is evaluated
         self.record = shared_data_communication_channel::global_record_clone();
@@ -259,23 +301,6 @@ impl AutomaticDifferentiator {
                 };
             }
         }
-    }
-
-    pub fn derivatives(&mut self, arguments: &Vec<Number>) -> Vec<(Number, f64)> {
-        self.reverse_propagate_adjoints();
-
-        arguments
-            .iter()
-            .filter_map(|arg| {
-                self.record.get(&arg.id).and_then(|op| {
-                    if let Operation::Value(_, _res, adj) = op {
-                        Some((arg.clone(), *adj))
-                    } else {
-                        None
-                    }
-                })
-            })
-            .collect()
     }
 
     pub fn print_parent_map(&self) {

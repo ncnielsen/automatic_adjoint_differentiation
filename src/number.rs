@@ -335,6 +335,23 @@ impl Number {
 
         result
     }
+
+    pub fn log(self, b: f64) -> Number {
+        let result: Number = Number::new_non_leaf(self.result.log(b));
+        let op = Operation::Log(result.id, self.id, b, result.result, 0.0);
+        shared_data_communication_channel::global_register_operation(op);
+        shared_data_communication_channel::global_add_parent_child_relationship(
+            result.id,
+            vec![self.id],
+        );
+
+        if self.leaf {
+            let val_op = Operation::Value(self.id, self.result, 0.0);
+            shared_data_communication_channel::global_register_operation(val_op);
+        }
+
+        result
+    }
 }
 
 impl Display for Number {

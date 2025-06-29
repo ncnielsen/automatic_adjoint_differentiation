@@ -46,10 +46,18 @@ pub fn global_register_operation(op: Operation) {
         | Operation::Exp(id, _, _, _)
         | Operation::Pow(id, _, _, _, _)
         | Operation::Sqrt(id, _, _, _)
+        | Operation::Log(id, _, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
     record.insert(id, op);
     let mut node_list = NODE_LIST.lock().unwrap();
+
+    // Make sure each record apears exactly once.
+    // Remove and re-insert in order to guarantee valid ordering
+    if node_list.iter().any(|node| *node == id) {
+        node_list.remove_item(&id);
+    }
+
     node_list.push(id);
 }
 

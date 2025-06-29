@@ -220,3 +220,193 @@ fn test_operators_sin_sqrt_exp() {
     assert!(evaluation.result - (-0.12745886733521275) < epsilon);
     assert!(dfdx1 - 2.989310 < epsilon);
 }
+
+#[test]
+fn test_operators_add_sub_mull_div_ln_sin_cos_exp_pow_sqrt_log() {
+    // sin(ln(sqrt((((x+y)*(y-z))) / pi))) + log(8, (pow(exp(cos(w)),5.0))
+    // x = 3
+    // y = 3
+    // w = 3
+    // z = -0.6
+
+    // f(x) = -1.55896
+    // df/dz = -0.07920
+    // df/dx = 0.047521
+
+    let mut automatic_differentiator = AutomaticDifferentiator::new();
+
+    let x = Number::new(3.0);
+    let y = Number::new(3.0);
+    let w = Number::new(3.0);
+    let z = Number::new(-0.6);
+
+    let arguments = vec![x, y, w, z];
+
+    fn f(args: &[Number]) -> Number {
+        let x = args[0];
+        let y = args[1];
+        let w = args[2];
+        let z = args[3];
+
+        // sin(ln(sqrt(((x+y)*(y-z)) / pi ))) + log(8, (pow(exp(cos(w)),5.0))
+
+        (((x + y) * (y - z)) / PI).sqrt().ln().sin() + (w.cos().exp().pow(5.0).log(8.0))
+    }
+
+    let evaluation = automatic_differentiator.derivatives(f, &arguments);
+
+    assert_eq!(evaluation.derivatives.len(), arguments.len());
+
+    let dfdx = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == x.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdy = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == y.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdz = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == z.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdw = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == w.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let epsilon = 1e-10;
+
+    /* with Log_8 */
+    assert!(evaluation.result - (-1.55896) < epsilon);
+    assert!(dfdz - (-0.07920) < epsilon);
+    assert!(dfdx - 0.04752113845912348 < epsilon);
+    assert!(dfdw - (-0.33932189299696824) < epsilon);
+    assert!(dfdy - 0.12672303589099593 < epsilon);
+}
+
+#[test]
+fn test_operators_add_sub_mul_div_ln_sqrt() {
+    let mut automatic_differentiator = AutomaticDifferentiator::new();
+
+    let x = Number::new(3.0);
+    let y = Number::new(3.0);
+    let z = Number::new(-0.6);
+
+    let arguments = vec![x, y, z];
+
+    fn f(args: &[Number]) -> Number {
+        let x = args[0];
+        let y = args[1];
+        let z = args[2];
+
+        // ln(sqrt(((x+y)*(y-z)) / pi ))
+
+        (((x + y) * (y - z)) / PI).sqrt().ln()
+    }
+
+    let evaluation = automatic_differentiator.derivatives(f, &arguments);
+
+    assert_eq!(evaluation.derivatives.len(), arguments.len());
+
+    let dfdx = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == x.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdy = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == y.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdz = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == z.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let epsilon = 1e-10;
+
+    assert!(evaluation.result - (0.963982) < epsilon);
+    assert!(dfdz - (-0.1388888888888889) < epsilon);
+    assert!(dfdx - 0.083333333333333342 < epsilon);
+    assert!(dfdy - 0.963982 < epsilon);
+}
+
+#[test]
+fn test_operators_add_sub_mul_div_ln_sqrt_sin() {
+    let mut automatic_differentiator = AutomaticDifferentiator::new();
+
+    let x = Number::new(3.0);
+    let y = Number::new(3.0);
+    let z = Number::new(-0.6);
+
+    let arguments = vec![x, y, z];
+
+    fn f(args: &[Number]) -> Number {
+        let x = args[0];
+        let y = args[1];
+        let z = args[2];
+
+        // sin((x+y)*(y-z)) / pi )
+
+        (((x + y) * (y - z)) / PI).sin()
+    }
+
+    let evaluation = automatic_differentiator.derivatives(f, &arguments);
+
+    assert_eq!(evaluation.derivatives.len(), arguments.len());
+
+    let dfdx = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == x.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdy = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == y.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdz = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == z.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let epsilon = 1e-5;
+
+    assert!(evaluation.result - (0.558278) < epsilon);
+    assert!(dfdx - 0.950714 < epsilon);
+    assert!(dfdy - 2.535237 < epsilon);
+    assert!(dfdz - (-1.58452) < epsilon);
+}

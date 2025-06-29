@@ -115,6 +115,7 @@ impl AutomaticDifferentiator {
                     Operation::Exp(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Pow(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Sqrt(_, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Log(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
             }
@@ -136,6 +137,7 @@ impl AutomaticDifferentiator {
                     Operation::Exp(id, _arg_id, _res, _adj) => id,
                     Operation::Pow(id, _base_id, _exp, _res, _adj) => id,
                     Operation::Sqrt(id, _arg_id, _res, _adj) => id,
+                    Operation::Log(id, _arg_id, _base, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
                 };
 
@@ -256,13 +258,17 @@ impl AutomaticDifferentiator {
                                         node_id, adjoint, id
                                     );
                                 }
-                                Operation::Pow(id, _base_id, exp, res, adj) => {
-                                    // arg_ = parent_ * Dparent / Darg = parent_ * exp * res ^ (exp -1)
-                                    adjoint += adj * exp * res.powf(exp - 1.0);
-                                    println!(
-                                        "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
-                                    );
+                                Operation::Pow(id, base_id, exp, _res, adj) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * exp * base ^ (exp -1)
+                                    if let Some(base) = self.record.get(base_id) {
+                                        let base = get_res_from_operation(base);
+
+                                        adjoint += adj * exp * base.powf(exp - 1.0);
+                                        println!(
+                                            "node with id {} has adjoint {}. ParentId: {}",
+                                            node_id, adjoint, id
+                                        );
+                                    }
                                 }
                                 Operation::Sqrt(id, arg_id, _res, adj) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * (1/ (2*sqrt(x))
@@ -270,6 +276,18 @@ impl AutomaticDifferentiator {
                                         let arg = get_res_from_operation(arg);
 
                                         adjoint += adj * (1.0 / (2.0 * arg.sqrt()));
+                                        println!(
+                                            "node with id {} has adjoint {}. ParentId: {}",
+                                            node_id, adjoint, id
+                                        );
+                                    }
+                                }
+                                Operation::Log(id, arg_id, base, _res, adj) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * (1/(arg*ln(base)))
+                                    if let Some(arg) = self.record.get(arg_id) {
+                                        let arg = get_res_from_operation(arg);
+
+                                        adjoint += adj * (1.0 / (arg * base.ln()));
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
                                             node_id, adjoint, id
@@ -302,6 +320,7 @@ impl AutomaticDifferentiator {
                     Operation::Exp(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Pow(_id, _base_id, _exp, _res, adj) => *adj += adjoint,
                     Operation::Sqrt(_id, _arg_id, _res, adj) => *adj += adjoint,
+                    Operation::Log(_id, _arg_id, _base, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
             }
@@ -324,13 +343,23 @@ impl AutomaticDifferentiator {
     }
 
     pub fn print_child_map_id(&self) {
+        println!("Printing child map id");
+
         for kv in self.child_parent_map.iter() {
             let children: Vec<String> = kv.1.iter().map(|x| x.to_string()).collect();
             println!("Child {0}. Parent: {1}", kv.0, children.join(", "));
         }
     }
 
+    pub fn print_nodes_list(&self) {
+        println!("Printing nodes list");
+        for node in self.node_list.iter() {
+            println!("{0}", node);
+        }
+    }
+
     pub fn print_record_collection(&self) {
+        println!("Printing record collection");
         for kv in self.record.iter() {
             println!("{0}", kv.1);
         }
@@ -359,6 +388,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
         Operation::Exp(_, _, res, _) => *res,
         Operation::Pow(_, _, _, res, _) => *res,
         Operation::Sqrt(_, _, res, _) => *res,
+        Operation::Log(_, _, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,
     }
 }

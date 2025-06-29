@@ -18,7 +18,7 @@ fn test_operators_add_mul_ln() {
 
     let arguments = vec![x1, x2, x3, x4, x5];
 
-    fn f(args: &Vec<Number>) -> Number {
+    fn f(args: &[Number]) -> Number {
         let y1 = args[2] * (args[4] * args[0] + args[1]);
         let y2 = y1.ln();
         let y = (y1 + args[3] * y2) * (y1 + y2);
@@ -87,7 +87,7 @@ fn test_operators_sub_sin_div() {
 
     let arguments = vec![x1, x2];
 
-    fn f(args: &Vec<Number>) -> Number {
+    fn f(args: &[Number]) -> Number {
         let x1 = args[0];
         let x2 = args[1];
         let frac = x1 / x2;
@@ -129,7 +129,7 @@ fn test_operators_cos_exp() {
 
     let arguments = vec![x1];
 
-    fn f(args: &Vec<Number>) -> Number {
+    fn f(args: &[Number]) -> Number {
         let x1 = args[0];
 
         (x1.exp() + PI / 2.0).cos()
@@ -161,7 +161,7 @@ fn test_operators_cos_pow() {
 
     let arguments = vec![x1];
 
-    fn f(args: &Vec<Number>) -> Number {
+    fn f(args: &[Number]) -> Number {
         let x1 = args[0];
 
         (x1.pow(5.0) + PI / 2.0).cos()
@@ -197,7 +197,7 @@ fn test_operators_sin_sqrt_exp() {
 
     let arguments = vec![x1];
 
-    fn f(args: &Vec<Number>) -> Number {
+    fn f(args: &[Number]) -> Number {
         let x1 = args[0];
 
         (((x1.exp() + PI).sqrt()) / 2.0).sin()

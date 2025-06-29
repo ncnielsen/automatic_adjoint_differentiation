@@ -32,7 +32,7 @@ fn main() {
 
     let arguments = vec![x1];
 
-    fn f(args: &Vec<Number>) -> Number {
+    fn f(args: &[Number]) -> Number {
         //sin(sqrt(e^x+π))÷2)
         let x1 = args[0];
 

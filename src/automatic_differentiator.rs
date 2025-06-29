@@ -44,9 +44,9 @@ impl AutomaticDifferentiator {
         }
     }
 
-    pub fn derivatives<F>(&mut self, func: F, arguments: &Vec<Number>) -> Evaluation
+    pub fn derivatives<F>(&mut self, func: F, arguments: &[Number]) -> Evaluation
     where
-        F: Fn(&Vec<Number>) -> Number,
+        F: Fn(&[Number]) -> Number,
     {
         let forward_evalutation = self.forward_evaluate(func, arguments);
         self.reverse_propagate_adjoints();
@@ -74,9 +74,9 @@ impl AutomaticDifferentiator {
         }
     }
 
-    fn forward_evaluate<F>(&mut self, func: F, arguments: &Vec<Number>) -> Number
+    fn forward_evaluate<F>(&mut self, func: F, arguments: &[Number]) -> Number
     where
-        F: Fn(&Vec<Number>) -> Number,
+        F: Fn(&[Number]) -> Number,
     {
         // Lock to avoid data races. Effectively serializes calls to forward_evaluate across all instances of AutomaticDifferentiator
         let _lock = DATA_RACE.lock().unwrap();

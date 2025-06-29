@@ -129,6 +129,6 @@ fn main() {
 
     assert!(evaluation.result - (0.558278) < epsilon);
     assert!(dfdx - (0.950714) < epsilon);
-    //    assert!(dfdy - (2.535237) < epsilon);
+    assert!(dfdy - (2.535237) < epsilon);
     assert!(dfdz - (-1.58452) < epsilon);
 }

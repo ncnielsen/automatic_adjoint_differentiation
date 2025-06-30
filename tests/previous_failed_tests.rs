@@ -62,7 +62,7 @@ fn test_operators_add_sub_mul_sin() {
 }
 
 #[test]
-fn test_operators_div_pi_snatch() {
+fn test_operators_add_div_pi() {
     let mut automatic_differentiator = AutomaticDifferentiator::new();
 
     let x = Number::new(3.0);
@@ -107,7 +107,7 @@ fn test_operators_div_pi_snatch() {
 }
 
 #[test]
-fn test_operators_div_pi_snatch_2() {
+fn test_operators_sub_div_pi() {
     let mut automatic_differentiator = AutomaticDifferentiator::new();
 
     let y = Number::new(3.0);
@@ -152,7 +152,7 @@ fn test_operators_div_pi_snatch_2() {
 }
 
 #[test]
-fn test_operators_pie_snatch_3_mul_only_version() {
+fn test_operators_mul_div_pi() {
     let mut automatic_differentiator = AutomaticDifferentiator::new();
 
     let x = Number::new(3.0);
@@ -197,7 +197,7 @@ fn test_operators_pie_snatch_3_mul_only_version() {
 }
 
 #[test]
-fn test_operators_pie_snatch_3_fails_at_dfdy() {
+fn test_operators_add_sub_mul_div_pi() {
     let mut automatic_differentiator = AutomaticDifferentiator::new();
 
     let x = Number::new(3.0);

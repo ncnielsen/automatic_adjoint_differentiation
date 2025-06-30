@@ -54,7 +54,7 @@ pub fn global_register_operation(op: Operation) {
 
     // Make sure each record apears exactly once.
     // Remove and re-insert in order to guarantee valid ordering
-    if node_list.iter().any(|node| *node == id) {
+    if node_list.contains(&id) {
         node_list.remove_item(&id);
     }
 

@@ -20,7 +20,7 @@ The long-term goal of this library, is to provide an implementation in Rust of A
 
 There are plenty of books on Tensor Algebra (sometimes called multilinear algebra) and Tensor Calculus. These books provide the mathematical foundation for the implementation. The primary pieces to this puzzle is of-course the chain-rule for Tensor calculus and the derivatives (sometimes called Covariant derivatives) for each basic Tensor operation in Tensor Algebra.
 
-There are exists a multitude of commercially available tools - especially for engineering-purposes, that probably run on a closed-source implementations of AAD for (m, n) Tensors. But there are very few open source libraries.
+There also exists a multitude of commercially available tools - especially for engineering-purposes, that probably run on a closed-source implementations of AAD for (m, n) Tensors. But there are very few open source libraries.
 
 Should you wish to join this effort and contribute code, the project builds on the following principles:
 

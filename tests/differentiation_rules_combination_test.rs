@@ -313,7 +313,7 @@ fn test_operators_add_sub_mul_div_pi_ln_sqrt() {
         let y = args[1];
         let z = args[2];
 
-        // ln(sqrt(((x+y)*(y-z)) / pi ))
+        // ln(sqrt( ( (x+y)*(y-z) ) / pi ))
         (((x + y) * (y - z)) / PI).sqrt().ln()
     }
 

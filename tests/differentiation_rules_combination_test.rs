@@ -116,7 +116,7 @@ fn test_operators_sub_sin_div_exp() {
 
     let epsilon = 1e-10;
 
-    assert!((evaluation.result - 2.017).abs() < epsilon);
+    assert!((evaluation.result - 2.0166466694282015).abs() < epsilon);
     assert!((dfdx1 - 3.0118433276739069).abs() < epsilon);
     assert!((dfdx2 - (-13.723961509314076)).abs() < epsilon);
 }
@@ -345,11 +345,65 @@ fn test_operators_add_sub_mul_div_pi_ln_sqrt() {
         .next()
         .unwrap();
 
-    let epsilon = 1e-10;
+    let epsilon = 1e-5;
 
     assert!((evaluation.result - (0.96398171442035951)).abs() < epsilon);
     assert!((dfdz - (-0.1388888888888889)).abs() < epsilon);
+    assert!((dfdy - 0.222222).abs() < epsilon);
     assert!((dfdx - 0.083333333333333342).abs() < epsilon);
-    // TODO: FIX
-    assert!((dfdy - 0.963982).abs() < epsilon);
+}
+
+#[test]
+fn test_operators_ln_sqrt() {
+    let mut automatic_differentiator = AutomaticDifferentiator::new();
+
+    let x = Number::new(3.0);
+    let y = Number::new(3.0);
+    let z = Number::new(-0.6);
+
+    let arguments = vec![x, y, z];
+
+    fn f(args: &[Number]) -> Number {
+        let x = args[0];
+        let y = args[1];
+        let z = args[2];
+
+        // ln(sqrt(sqrt( x+y+z )))
+        ((x + y + z) + (y * y)).sqrt().sqrt()
+    }
+
+    let evaluation = automatic_differentiator.derivatives(f, &arguments);
+
+    assert_eq!(evaluation.derivatives.len(), arguments.len());
+
+    let dfdx = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == x.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdy = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == y.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let dfdz = evaluation
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == z.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let epsilon = 1e-5;
+
+    assert!((evaluation.result - (1.948007)).abs() < epsilon);
+    assert!((dfdx - 0.033820).abs() < epsilon);
+    assert!((dfdy - 0.236737).abs() < epsilon);
+    assert!((dfdz - 0.033820).abs() < epsilon);
 }

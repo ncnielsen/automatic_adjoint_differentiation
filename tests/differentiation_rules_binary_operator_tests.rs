@@ -98,3 +98,17 @@ fn test_div_3_5() {
     }
     test_binary_operator(f, &arguments, 0.600000, 0.200000, -0.12000);
 }
+
+#[test]
+fn test_div_5_3() {
+    let x = Number::new(5.0);
+    let y = Number::new(3.0);
+    let arguments = vec![x, y];
+
+    fn f(args: &[Number]) -> Number {
+        let x = args[0];
+        let y = args[1];
+        x / y
+    }
+    test_binary_operator(f, &arguments, 1.666667, 0.333333, -0.55556);
+}

@@ -55,10 +55,10 @@ fn test_operators_add_sub_mul_sin() {
 
     let epsilon = 1e-5;
 
-    assert!(evaluation.result - (0.381250) < epsilon);
-    assert!(dfdx - (-3.32810) < epsilon);
-    assert!(dfdy - (-8.87493) < epsilon);
-    assert!(dfdz - (5.546831) < epsilon);
+    assert!((evaluation.result - (0.381250)).abs() < epsilon);
+    assert!((dfdx - (-3.32810)).abs() < epsilon);
+    assert!((dfdy - (-8.87493)).abs() < epsilon);
+    assert!((dfdz - (5.546831)).abs() < epsilon);
 }
 
 #[test]
@@ -101,9 +101,9 @@ fn test_operators_add_div_pi() {
 
     let epsilon = 1e-5;
 
-    assert!(evaluation.result - (0.943067) < epsilon);
-    assert!(dfdx - (-0.10587) < epsilon);
-    assert!(dfdy - (-0.10587) < epsilon);
+    assert!((evaluation.result - (0.943067)).abs() < epsilon);
+    assert!((dfdx - (-0.10587)).abs() < epsilon);
+    assert!((dfdy - (-0.10587)).abs() < epsilon);
 }
 
 #[test]
@@ -146,9 +146,9 @@ fn test_operators_sub_div_pi() {
 
     let epsilon = 1e-5;
 
-    assert!(evaluation.result - (0.911088) < epsilon);
-    assert!(dfdy - (0.131211) < epsilon);
-    assert!(dfdz - (-0.13121) < epsilon);
+    assert!((evaluation.result - (0.911088)).abs() < epsilon);
+    assert!((dfdy - (0.131211)).abs() < epsilon);
+    assert!((dfdz - (-0.13121)).abs() < epsilon);
 }
 
 #[test]
@@ -191,9 +191,9 @@ fn test_operators_mul_div_pi() {
 
     let epsilon = 1e-5;
 
-    assert!(evaluation.result - (0.273282) < epsilon);
-    assert!(dfdx - (-0.91858) < epsilon);
-    assert!(dfdy - (-0.91858) < epsilon);
+    assert!((evaluation.result - (0.273282)).abs() < epsilon);
+    assert!((dfdx - (-0.91858)).abs() < epsilon);
+    assert!((dfdy - (-0.91858)).abs() < epsilon);
 }
 
 #[test]
@@ -246,8 +246,8 @@ fn test_operators_add_sub_mul_div_pi() {
 
     let epsilon = 1e-5;
 
-    assert!(evaluation.result - (0.558278) < epsilon);
-    assert!(dfdx - (0.950714) < epsilon);
-    assert!(dfdy - (2.535237) < epsilon);
-    assert!(dfdz - (-1.58452) < epsilon);
+    assert!((evaluation.result - (0.558278)).abs() < epsilon);
+    assert!((dfdx - (0.950714)).abs() < epsilon);
+    assert!((dfdy - (2.535237)).abs() < epsilon);
+    assert!((dfdz - (-1.58452)).abs() < epsilon);
 }

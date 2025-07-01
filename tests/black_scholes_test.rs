@@ -1,6 +1,5 @@
-use aad::automatic_differentiator::{AutomaticDifferentiator, Derivative};
+use aad::automatic_differentiator::AutomaticDifferentiator;
 use aad::number::Number;
-use core::num;
 use statrs::distribution::Continuous;
 use statrs::distribution::{ContinuousCDF, Normal};
 use std::f64::consts::E;
@@ -166,7 +165,7 @@ fn black_scholes_test() {
 
     let numerical_evaluation = ad.derivatives(f_call, &arguments);
     let call_price = numerical_evaluation.result;
-    let call_delta = numerical_evaluation
+    let call_delta = numerical_evaluation // dOptionPrice/dStockPrice
         .derivatives
         .iter()
         .filter(|d| d.input.id == s.id)
@@ -174,15 +173,23 @@ fn black_scholes_test() {
         .next()
         .unwrap();
 
-    let call_gamma = numerical_evaluation
+    let call_gamma = numerical_evaluation // dOptionPrice/dStockPrice^2 (aka. stock price acceleration)
         .derivatives
         .iter()
-        .filter(|d| d.input.id == k.id)
+        .filter(|d| d.input.id == k.id) // This is the strike, not twice the price derivative
         .map(|x| x.derivative)
         .next()
         .unwrap();
 
-    let call_vega = numerical_evaluation
+    let call_vega = numerical_evaluation // dOptionPrice/dSigma (and sigma is volatility)
+        .derivatives
+        .iter()
+        .filter(|d| d.input.id == sigma.id)
+        .map(|x| x.derivative)
+        .next()
+        .unwrap();
+
+    let call_theta = numerical_evaluation // dOptionPrice/dt
         .derivatives
         .iter()
         .filter(|d| d.input.id == t.id)
@@ -190,7 +197,7 @@ fn black_scholes_test() {
         .next()
         .unwrap();
 
-    let call_theta = numerical_evaluation
+    let call_rho = numerical_evaluation // dOptionPrice/dr
         .derivatives
         .iter()
         .filter(|d| d.input.id == r.id)
@@ -198,11 +205,11 @@ fn black_scholes_test() {
         .next()
         .unwrap();
 
-    let epsilon = 1e-10;
-    /*     assert!(call_price - analytical_call_black_scholes_price < epsilon);
-    assert!(call_delta - analytical_call_delta < epsilon);
-    assert!(call_gamma - analytical_gamma < epsilon);
-    assert!(call_vega - analytical_vega < epsilon);
-    assert!(call_theta - analytical_call_theta < epsilon);
-    */
+    let epsilon = 1e-5;
+    assert!((call_price - 10.45058).abs() < epsilon);
+    assert!((call_delta - 0.63683).abs() < epsilon);
+    assert!((call_gamma - 0.01876).abs() < epsilon);
+    assert!((call_vega - 37.52403).abs() < epsilon);
+    assert!((call_theta - 6.41403).abs() < epsilon);
+    assert!((call_rho - 53.23248).abs() < epsilon);
 }

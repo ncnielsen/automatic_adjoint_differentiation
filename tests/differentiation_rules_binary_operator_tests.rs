@@ -38,9 +38,9 @@ fn test_binary_operator<F>(
 
     let epsilon = 1e-5;
     assert_eq!(evaluation.derivatives.len(), 2);
-    assert!(evaluation.result - expected_result < epsilon);
-    assert!(dfdx - expected_dfdx < epsilon);
-    assert!(dfdy - expected_dfdy < epsilon);
+    assert!((evaluation.result - expected_result).abs() < epsilon);
+    assert!((dfdx - expected_dfdx).abs() < epsilon);
+    assert!((dfdy - expected_dfdy).abs() < epsilon);
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn test_mul_3_5() {
     fn f(args: &[Number]) -> Number {
         let x = args[0];
         let y = args[1];
-        x - y
+        x * y
     }
     test_binary_operator(f, &arguments, 15.00000, 5.00000, 3.00000);
 }

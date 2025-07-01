@@ -70,12 +70,12 @@ fn test_operators_add_mul_ln() {
         .unwrap();
 
     let epsilon = 1e-10;
-    assert!(evaluation.result - 797.75132345616487 < epsilon);
-    assert!(dfdx1 - 950.7364539019619 < epsilon);
-    assert!(dfdx2 - 190.14729078039238 < epsilon);
-    assert!(dfdx3 - 443.6770118209156 < epsilon);
-    assert!(dfdx4 - 73.20408806599326 < epsilon);
-    assert!(dfdx5 - 190.14729078039238 < epsilon);
+    assert!((evaluation.result - 797.75132345616487).abs() < epsilon);
+    assert!((dfdx1 - 950.7364539019619).abs() < epsilon);
+    assert!((dfdx2 - 190.14729078039238).abs() < epsilon);
+    assert!((dfdx3 - 443.6770118209156).abs() < epsilon);
+    assert!((dfdx4 - 73.20408806599326).abs() < epsilon);
+    assert!((dfdx5 - 190.14729078039238).abs() < epsilon);
 }
 
 #[test]
@@ -116,9 +116,9 @@ fn test_operators_sub_sin_div_exp() {
 
     let epsilon = 1e-10;
 
-    assert!(evaluation.result - 2.017 < epsilon);
-    assert!(dfdx1 - 3.0118433276739069 < epsilon);
-    assert!(dfdx2 - (-13.723961509314076) < epsilon);
+    assert!((evaluation.result - 2.017).abs() < epsilon);
+    assert!((dfdx1 - 3.0118433276739069).abs() < epsilon);
+    assert!((dfdx2 - (-13.723961509314076)).abs() < epsilon);
 }
 
 #[test]
@@ -149,8 +149,8 @@ fn test_operators_cos_pi_div_exp_cos() {
 
     let epsilon = 1e-10;
 
-    assert!(evaluation.result - (-0.41078) < epsilon);
-    assert!(dfdx1 - 2.478350 < epsilon);
+    assert!((evaluation.result - (-0.41078129050290929)).abs() < epsilon);
+    assert!((dfdx1 - 2.478349732955234).abs() < epsilon);
 }
 
 #[test]
@@ -180,8 +180,8 @@ fn test_operators_cos_pow_pi_add_div() {
         .unwrap();
 
     let epsilon = 1e-10;
-    assert!(evaluation.result - (0.841471) < epsilon);
-    assert!(dfdx1 - (-2.70151) < epsilon);
+    assert!((evaluation.result - (0.8414709848078965)).abs() < epsilon);
+    assert!((dfdx1 - (-2.7015115293406984)).abs() < epsilon);
 }
 
 #[test]
@@ -217,8 +217,8 @@ fn test_operators_sin_sqrt_exp_div_add() {
 
     let epsilon = 1e-10;
 
-    assert!(evaluation.result - (-0.12745886733521275) < epsilon);
-    assert!(dfdx1 - 2.989310 < epsilon);
+    assert!((evaluation.result - (-0.12745886733521275)).abs() < epsilon);
+    assert!((dfdx1 - 2.9893099479208347).abs() < epsilon);
 }
 
 #[test]
@@ -291,11 +291,11 @@ fn test_operators_add_sub_mull_div_ln_sin_cos_exp_pow_sqrt_log() {
 
     let epsilon = 1e-10;
 
-    assert!(evaluation.result - (-1.55896) < epsilon);
-    assert!(dfdz - (-0.07920) < epsilon);
-    assert!(dfdx - 0.04752113845912348 < epsilon);
-    assert!(dfdw - (-0.33932189299696824) < epsilon);
-    assert!(dfdy - 0.12672303589099593 < epsilon);
+    assert!((evaluation.result - (-1.5589601142820477)).abs() < epsilon);
+    assert!((dfdz - (-0.079201897431872462)).abs() < epsilon);
+    assert!((dfdx - 0.04752113845912348).abs() < epsilon);
+    assert!((dfdw - (-0.33932189299696824)).abs() < epsilon);
+    assert!((dfdy - 0.12672303589099593).abs() < epsilon);
 }
 
 #[test]
@@ -347,8 +347,9 @@ fn test_operators_add_sub_mul_div_pi_ln_sqrt() {
 
     let epsilon = 1e-10;
 
-    assert!(evaluation.result - (0.963982) < epsilon);
-    assert!(dfdz - (-0.1388888888888889) < epsilon);
-    assert!(dfdx - 0.083333333333333342 < epsilon);
-    assert!(dfdy - 0.963982 < epsilon);
+    assert!((evaluation.result - (0.96398171442035951)).abs() < epsilon);
+    assert!((dfdz - (-0.1388888888888889)).abs() < epsilon);
+    assert!((dfdx - 0.083333333333333342).abs() < epsilon);
+    // TODO: FIX
+    assert!((dfdy - 0.963982).abs() < epsilon);
 }

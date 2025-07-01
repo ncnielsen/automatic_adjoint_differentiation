@@ -24,7 +24,7 @@ where
 
     let epsilon = 1e-5;
     assert_eq!(evaluation.derivatives.len(), 1);
-    assert!(evaluation.result - expected_result < epsilon);
+    assert!((evaluation.result - expected_result).abs() < epsilon);
     assert!(dfdx - expected_dfdx < epsilon);
 }
 

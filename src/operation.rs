@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::operation;
+
 #[derive(Debug, Clone)]
 pub enum Operation {
     Add(i64, i64, i64, f64, f64), // id, lhs_id, rhs_id, result, adjoint
@@ -13,6 +15,7 @@ pub enum Operation {
     Pow(i64, i64, f64, f64, f64), // id, base_id, exp, result, adjoint
     Sqrt(i64, i64, f64, f64),     // id, arg_id, result, adjoint
     Log(i64, i64, f64, f64, f64), // id, arg_id, base, result, adjoint
+    Cdf(i64, i64, f64, f64),      // id, arg_id, result, adjoint
     Value(i64, f64, f64),         // id, result, adjoint
 }
 
@@ -111,8 +114,80 @@ impl Display for Operation {
                     id, arg_id, result, adjoint
                 )
             }
+            Operation::Cdf(id, arg_id, result, adjoint) => {
+                write!(
+                    f,
+                    "id {}: Cfd(arg_id: {}, res:{}, adjoint {})",
+                    id, arg_id, result, adjoint
+                )
+            }
             Operation::Value(id, value, adjoint) => {
                 write!(f, "id: {}: Value({}, adjoint {})", id, value, adjoint)
+            }
+        }
+    }
+}
+
+impl Operation {
+    pub fn get_graph_string(&self) -> String {
+        match self {
+            Operation::Add(id, _lhs_id, _rhs_id, result, adjoint) => {
+                let s = std::format!("\"id {} Add res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Sub(id, _lhs_id, _rhs_id, result, adjoint) => {
+                let s = std::format!("\" id {} Sub res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Mul(id, _lhs_id, _rhs_id, result, adjoint) => {
+                let s = std::format!("\" id {} Mul res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Div(id, _lhs_id, _rhs_id, result, adjoint) => {
+                let s = std::format!("\"id {} Div res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Ln(id, _arg_id, result, adjoint) => {
+                let s = std::format!("\"id {} Ln res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Sin(id, _arg_id, result, adjoint) => {
+                let s = std::format!("\"id {} Sin res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Cos(id, _arg_id, result, adjoint) => {
+                let s = std::format!("\"id {} Cos res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Exp(id, _arg_id, result, adjoint) => {
+                let s = std::format!("\"id {} Exp res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Pow(id, _base_id, exp, result, adjoint) => {
+                let s = std::format!(
+                    "\"id {} Pow exp {} res {:.5} adj {:.5}\"",
+                    id,
+                    exp,
+                    result,
+                    adjoint
+                );
+                s
+            }
+            Operation::Sqrt(id, _arg_id, result, adjoint) => {
+                let s = std::format!("\"id {} Sqrt res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Log(id, _arg_id, _base, result, adjoint) => {
+                let s = std::format!("\"id {} Log res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Cdf(id, _arg_id, result, adjoint) => {
+                let s = std::format!("\"id {} Cdf res {:.5} adj {:.5}\"", id, result, adjoint);
+                s
+            }
+            Operation::Value(id, value, adjoint) => {
+                let s = std::format!("\"id {} Val {:.5} adj {:.5}\"", id, value, adjoint);
+                s
             }
         }
     }

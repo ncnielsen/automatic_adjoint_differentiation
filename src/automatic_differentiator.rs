@@ -2,6 +2,7 @@ use crate::{number::Number, operation::Operation, shared_data_communication_chan
 
 use once_cell::sync::Lazy;
 use ordered_hash_map::OrderedHashMap;
+use statrs::distribution::{Continuous, Normal};
 use std::{collections::HashMap, sync::Mutex};
 
 use sorted_vec::SortedVec;
@@ -116,6 +117,7 @@ impl AutomaticDifferentiator {
                     Operation::Pow(_, _, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Sqrt(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Log(_, _, _, _, adjoint) => *adjoint = 1.0,
+                    Operation::Cdf(_, _, _, adjoint) => *adjoint = 1.0,
                     Operation::Value(_, _, adjoint) => *adjoint = 1.0,
                 }
             }
@@ -138,6 +140,7 @@ impl AutomaticDifferentiator {
                     Operation::Pow(id, _base_id, _exp, _res, _adj) => id,
                     Operation::Sqrt(id, _arg_id, _res, _adj) => id,
                     Operation::Log(id, _arg_id, _base, _res, _adj) => id,
+                    Operation::Cdf(id, _arg_id, _res, _adj) => id,
                     Operation::Value(id, _res, _adj) => id,
                 };
 
@@ -294,6 +297,20 @@ impl AutomaticDifferentiator {
                                         );
                                     }
                                 }
+                                Operation::Cdf(id, arg_id, _res, adj) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * pdf(x)
+                                    if let Some(arg) = self.record.get(arg_id) {
+                                        let arg = get_res_from_operation(arg);
+
+                                        let norm = Normal::new(0.0, 1.0).unwrap();
+
+                                        adjoint += adj * norm.pdf(arg);
+                                        println!(
+                                            "node with id {} has adjoint {}. ParentId: {}",
+                                            node_id, adjoint, id
+                                        );
+                                    }
+                                }
                                 Operation::Value(id, _res, adj) => {
                                     adjoint += adj;
                                     println!(
@@ -321,6 +338,7 @@ impl AutomaticDifferentiator {
                     Operation::Pow(_id, _base_id, _exp, _res, adj) => *adj += adjoint,
                     Operation::Sqrt(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Log(_id, _arg_id, _base, _res, adj) => *adj += adjoint,
+                    Operation::Cdf(_id, _arg_id, _res, adj) => *adj += adjoint,
                     Operation::Value(_id, _res, adj) => *adj += adjoint,
                 };
             }
@@ -374,6 +392,26 @@ impl AutomaticDifferentiator {
             println!("{0}", op);
         }
     }
+
+    pub fn print_graph(&self) {
+        println!("digraph G {{");
+        for kv in self.parent_child_map.iter() {
+            for child in kv.1.iter() {
+                let parent_record_option = self.record.get(kv.0);
+                let child_record_option = self.record.get(child);
+                if let Some(parent_record) = parent_record_option {
+                    if let Some(child_record) = child_record_option {
+                        println!(
+                            "{} -> {};",
+                            parent_record.get_graph_string(),
+                            child_record.get_graph_string()
+                        );
+                    }
+                }
+            }
+        }
+        println!("}}");
+    }
 }
 
 fn get_res_from_operation(op: &Operation) -> f64 {
@@ -389,6 +427,7 @@ fn get_res_from_operation(op: &Operation) -> f64 {
         Operation::Pow(_, _, _, res, _) => *res,
         Operation::Sqrt(_, _, res, _) => *res,
         Operation::Log(_, _, _, res, _) => *res,
+        Operation::Cdf(_, _, res, _) => *res,
         Operation::Value(_, res, _) => *res,
     }
 }

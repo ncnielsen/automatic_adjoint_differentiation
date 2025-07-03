@@ -1,4 +1,5 @@
 use crate::operation::Operation;
+use statrs::distribution::{ContinuousCDF, Normal};
 use std::fmt;
 use std::fmt::Display;
 use std::ops::Add;
@@ -339,6 +340,25 @@ impl Number {
     pub fn log(self, b: f64) -> Number {
         let result: Number = Number::new_non_leaf(self.result.log(b));
         let op = Operation::Log(result.id, self.id, b, result.result, 0.0);
+        shared_data_communication_channel::global_register_operation(op);
+        shared_data_communication_channel::global_add_parent_child_relationship(
+            result.id,
+            vec![self.id],
+        );
+
+        if self.leaf {
+            let val_op = Operation::Value(self.id, self.result, 0.0);
+            shared_data_communication_channel::global_register_operation(val_op);
+        }
+
+        result
+    }
+
+    pub fn cdf(self) -> Number {
+        let norm = Normal::new(0.0, 1.0).unwrap();
+
+        let result: Number = Number::new_non_leaf(norm.cdf(self.result));
+        let op = Operation::Cdf(result.id, self.id, result.result, 0.0);
         shared_data_communication_channel::global_register_operation(op);
         shared_data_communication_channel::global_add_parent_child_relationship(
             result.id,

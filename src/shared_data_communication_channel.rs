@@ -50,6 +50,7 @@ pub fn global_register_operation(op: Operation) {
         | Operation::Pow(id, _, _, _, _)
         | Operation::Sqrt(id, _, _, _)
         | Operation::Log(id, _, _, _, _)
+        | Operation::Cdf(id, _, _, _)
         | Operation::Value(id, _, _) => id,
     };
     record.insert(id, op);

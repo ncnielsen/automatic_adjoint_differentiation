@@ -41,6 +41,8 @@ fn test_binary_operator<F>(
     assert!((evaluation.result - expected_result).abs() < epsilon);
     assert!((dfdx - expected_dfdx).abs() < epsilon);
     assert!((dfdy - expected_dfdy).abs() < epsilon);
+
+    automatic_differentiator.print_graph();
 }
 
 #[test]

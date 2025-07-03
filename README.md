@@ -3,8 +3,6 @@ An implementation of Automatic Adjoint Differentiation (AAD) in the programming 
 There are plenty of books on this subject. A particularly good book is "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation, Second Edition"
 by authors Andreas Griewank and Andrea Walther (see https://epubs.siam.org/doi/book/10.1137/1.9780898717761). The example used in this book to illustrate the concepts is also used as a test case in this code.
 
-Another good book is Modern Computational Finance by author Antoine Savine (see https://antoinesavine.com/books-by-antoine-savine/). The example used in this book to illustrate the concepts is also used as a test case in this code.
-
 AAD is a method for automatically evaluating derivatives for any given (smooth) mathematical expression. Other methods include finite differences such as forward, backward and centered difference which are all based on Taylor Series expansions.
 AAD is not based on Taylor Series expansion. Instead, the idea takes any given mathematical expression, f,  and construct an abstract-syntax-tree (AST) structure by breaking down the expression into its basic operations, say +, -, /, *, ln(x), sqrt, e^(x) etc.
 
@@ -12,7 +10,7 @@ The idea is that for each of the basic operations, the derivative is known analy
 
 When the process completes df/dx1, df/dx2, ..., df/dxn has has been calculated for each input, 1 to n. In addition, the derivatives of all intermediary operations have been calculated with respect to f.
 
-While there are plenty of implementations of AAD in C++ and some in Rust, almost every implementation of AAD and every book on this subject assumes that functions are scalar-functions. That is they assume that the user is working on classical functions such as those prevalent in Finance (for example for calculating the price of an option). This is also the case for the two reference books listed above.
+While there are plenty of implementations of AAD in C++ and some in Rust, almost every implementation of AAD and every book on this subject assumes that functions are scalar-functions. That is they assume that the user is working on classical functions such as those prevalent in Finance (for example for calculating the price of an option). This is also the case for the reference book listed above.
 
 However, for most scientific purposes, relationships are not expressed naturally as scalar functions. Instead, many scientific relationships are expressed using Vectors or One-forms (sometimes called Dual Vectors). More generally, scientific relationships are expressed in Tensors, where Tensors of rank 0 are scalars, Tensors of Rank (1,0) are Vectors and Tensors of Rank (0,1) are One-forms. But many important scientific relationships are expressed in general Tensors of rank (m, n). Most notably Maxwells equations of electromagnetism in its covariant form is a (single) general Tensor equation. Another prominent example is Einsteins Field equations which, in its expanded form, consists of 16 partial differential equations that must all be true simultaneously. Therefore, it is quite unwieldy unless expressed as a general Tensor equation in which case it boils down to a single equation.
 

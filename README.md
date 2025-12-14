@@ -1,5 +1,7 @@
 An implementation of Automatic Adjoint Differentiation (AAD) in the programming language Rust.
 
+This project is part of a larger ambition by Numerical Solution to provide real contributions to the scientific endevor. See more on www.NumericalSolution.Com
+
 There are plenty of books on this subject. A particularly good book is "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation, Second Edition"
 by authors Andreas Griewank and Andrea Walther (see https://epubs.siam.org/doi/book/10.1137/1.9780898717761). The example used in this book to illustrate the concepts is also used as a test case in this code.
 

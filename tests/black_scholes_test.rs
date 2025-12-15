@@ -1,7 +1,6 @@
 use aad::automatic_differentiator::AutomaticDifferentiator;
 use aad::number::Number;
-use statrs::distribution::{ContinuousCDF, Normal};
-use std::f64::consts::E;
+use statrs::distribution::{Normal};
 
 fn f_call(args: &[Number]) -> Number {
     let s = args[0]; // Current stock price

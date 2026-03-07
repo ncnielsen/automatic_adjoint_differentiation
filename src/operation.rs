@@ -110,7 +110,7 @@ impl Display for Operation {
             Operation::Log(id, arg_id, _base, result, adjoint) => {
                 write!(
                     f,
-                    "id {}: Pow(arg_id: {}, res: {}, adjoint {})",
+                    "id {}: Log(arg_id: {}, res: {}, adjoint {})",
                     id, arg_id, result, adjoint
                 )
             }

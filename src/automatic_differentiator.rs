@@ -56,8 +56,8 @@ impl AutomaticDifferentiator {
             .iter()
             .filter_map(|arg| {
                 self.record.get(&arg.id).and_then(|op| {
-                    if let Operation::Value(_, _res, adj) = op {
-                        Some((arg, *adj))
+                    if let Operation::Value(_, _, _) = op {
+                        Some((arg, op.get_adjoint()))
                     } else {
                         None
                     }
@@ -103,23 +103,8 @@ impl AutomaticDifferentiator {
         // Set adjoint of f() = y to 1.0. i.e. set value of the last entry to 1.0.
         if let Some(last_id) = self.node_list.last() {
             println!("Setting adjoint to 1.0 for id {}", last_id);
-
             if let Some(rec) = self.record.get_mut(last_id) {
-                match rec {
-                    Operation::Add(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Sub(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Mul(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Div(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Ln(_, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Sin(_, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Cos(_, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Exp(_, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Pow(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Sqrt(_, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Log(_, _, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Cdf(_, _, _, adjoint) => *adjoint = 1.0,
-                    Operation::Value(_, _, adjoint) => *adjoint = 1.0,
-                }
+                rec.set_adjoint(1.0);
             }
         }
 
@@ -128,194 +113,163 @@ impl AutomaticDifferentiator {
             // Implement the adjoint equation
             let mut adjoint = 0.0;
             if let Some(node) = self.record.get(node_map_entry) {
-                let node_id = match node {
-                    Operation::Add(id, _lhs_id, _rhs_id, _res, _adj) => id,
-                    Operation::Sub(id, _lhs_id, _rhs_id, _res, _adj) => id,
-                    Operation::Mul(id, _lhs_id, _rhs_id, _res, _adj) => id,
-                    Operation::Div(id, _num_id, _den_id, _res, _adj) => id,
-                    Operation::Ln(id, _arg_id, _res, _adj) => id,
-                    Operation::Sin(id, _arg_id, _res, _adj) => id,
-                    Operation::Cos(id, _arg_id, _res, _adj) => id,
-                    Operation::Exp(id, _arg_id, _res, _adj) => id,
-                    Operation::Pow(id, _base_id, _exp, _res, _adj) => id,
-                    Operation::Sqrt(id, _arg_id, _res, _adj) => id,
-                    Operation::Log(id, _arg_id, _base, _res, _adj) => id,
-                    Operation::Cdf(id, _arg_id, _res, _adj) => id,
-                    Operation::Value(id, _res, _adj) => id,
-                };
+                let node_id = node.get_id();
 
                 println!("Calculating adjoint for node Vi with id {}", node_id);
-                if let Some(parents) = self.child_parent_map.get(node_id) {
+                if let Some(parents) = self.child_parent_map.get(&node_id) {
                     for parent in parents {
                         if let Some(parent_operation) = self.record.get(parent) {
+                            let parent_adj = parent_operation.get_adjoint();
+                            let parent_id = parent_operation.get_id();
                             match parent_operation {
                                 // lhs_ = parent_ * Dparent/Dlhs = parent_ * 1
                                 // rhs_ = parent_ * Dparent/Drhs = parent_ * 1
-                                Operation::Add(id, _lhs_id, _rhs_id, _res, adj) => {
-                                    adjoint += adj; // lhs, rhs are identical, so this is enough
+                                Operation::Add(_, _, _, _, _) => {
+                                    adjoint += parent_adj; // lhs, rhs are identical, so this is enough
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
+                                        node_id, adjoint, parent_id
                                     );
                                 }
-                                Operation::Sub(id, lhs_id, rhs_id, _res, adj) => {
+                                Operation::Sub(_, lhs_id, rhs_id, _, _) => {
                                     // lhs_ = parent_ * Dparent/Dlhs = parent_
-                                    if node_id == lhs_id {
-                                        adjoint += adj;
+                                    if node_id == *lhs_id {
+                                        adjoint += parent_adj;
                                     }
-
                                     // rhs_ = parent_ * Dparent/Drhs = -1 * parent_
-                                    if node_id == rhs_id {
-                                        adjoint += adj * -1.0;
+                                    if node_id == *rhs_id {
+                                        adjoint -= parent_adj;
                                     }
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
+                                        node_id, adjoint, parent_id
                                     );
                                 }
-                                Operation::Mul(id, lhs_id, rhs_id, _res, adj) => {
+                                Operation::Mul(_, lhs_id, rhs_id, _, _) => {
                                     // lhs_ = parent_ * Dparent/Dlhs = parent_ * rhs
-                                    if node_id == lhs_id {
+                                    if node_id == *lhs_id {
                                         if let Some(rhs) = self.record.get(rhs_id) {
-                                            let rhs = get_res_from_operation(rhs);
-                                            adjoint += adj * rhs;
+                                            adjoint += parent_adj * rhs.get_result();
                                         }
                                     }
-
                                     // rhs_ = parent_ * Dparent/Drhs = parent_ * lhs
-                                    if node_id == rhs_id {
+                                    if node_id == *rhs_id {
                                         if let Some(lhs) = self.record.get(lhs_id) {
-                                            let lhs = get_res_from_operation(lhs);
-                                            adjoint += adj * lhs;
+                                            adjoint += parent_adj * lhs.get_result();
                                         }
                                     }
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
+                                        node_id, adjoint, parent_id
                                     );
                                 }
-                                Operation::Div(id, num_id, den_id, _res, adj) => {
+                                Operation::Div(_, num_id, den_id, _, _) => {
                                     // num_ = parent_ * Dparent/Dnum = parent_ * 1/den
-                                    if node_id == num_id {
+                                    if node_id == *num_id {
                                         if let Some(den) = self.record.get(den_id) {
-                                            let den = get_res_from_operation(den);
-                                            adjoint += adj * 1.0 / den;
+                                            adjoint += parent_adj / den.get_result();
                                         }
                                     }
-
                                     // den_ = parent_ * Dparent/Dden = parent_ * -1 * (num/den^2)
-                                    if node_id == den_id {
+                                    if node_id == *den_id {
                                         if let Some(num) = self.record.get(num_id) {
                                             if let Some(den) = self.record.get(den_id) {
-                                                let num = get_res_from_operation(num);
-                                                let den = get_res_from_operation(den);
-                                                adjoint += adj * -1.0 * (num / (den * den));
+                                                let num = num.get_result();
+                                                let den = den.get_result();
+                                                adjoint -= parent_adj * num / (den * den);
                                             }
                                         }
                                     }
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
+                                        node_id, adjoint, parent_id
                                     );
                                 }
-
-                                Operation::Ln(id, arg_id, _res, adj) => {
+                                Operation::Ln(_, arg_id, _, _) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * 1/arg
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(arg);
-                                        let arg_res = arg;
-                                        adjoint += adj * (1.0 / arg_res);
+                                        adjoint += parent_adj / arg.get_result();
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Sin(id, arg_id, _res, adj) => {
+                                Operation::Sin(_, arg_id, _, _) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * cos(arg)
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(arg);
-                                        adjoint += adj * arg.cos();
+                                        adjoint += parent_adj * arg.get_result().cos();
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Cos(id, arg_id, _res, adj) => {
+                                Operation::Cos(_, arg_id, _, _) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * -sin(arg)
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(arg);
-                                        adjoint += adj * -1.0 * arg.sin();
+                                        adjoint -= parent_adj * arg.get_result().sin();
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Exp(id, _arg_id, res, adj) => {
-                                    // arg_ = parent_ * Dparent / Darg = parent_ * 1.0 * res
-                                    adjoint += adj * res;
+                                Operation::Exp(_, _, _, _) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * result (d(e^x)/dx = e^x)
+                                    adjoint += parent_adj * parent_operation.get_result();
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
+                                        node_id, adjoint, parent_id
                                     );
                                 }
-                                Operation::Pow(id, base_id, exp, _res, adj) => {
-                                    // arg_ = parent_ * Dparent / Darg = parent_ * exp * base ^ (exp -1)
+                                Operation::Pow(_, base_id, exp, _, _) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * exp * base ^ (exp - 1)
                                     if let Some(base) = self.record.get(base_id) {
-                                        let base = get_res_from_operation(base);
-
-                                        adjoint += adj * exp * base.powf(exp - 1.0);
+                                        let exp = *exp;
+                                        adjoint += parent_adj * exp * base.get_result().powf(exp - 1.0);
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Sqrt(id, arg_id, _res, adj) => {
-                                    // arg_ = parent_ * Dparent / Darg = parent_ * (1/ (2*sqrt(x))
+                                Operation::Sqrt(_, arg_id, _, _) => {
+                                    // arg_ = parent_ * Dparent / Darg = parent_ * (1 / (2*sqrt(x)))
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(arg);
-
-                                        adjoint += adj * (1.0 / (2.0 * arg.sqrt()));
+                                        adjoint += parent_adj / (2.0 * arg.get_result().sqrt());
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Log(id, arg_id, base, _res, adj) => {
+                                Operation::Log(_, arg_id, base, _, _) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * (1/(arg*ln(base)))
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(arg);
-
-                                        adjoint += adj * (1.0 / (arg * base.ln()));
+                                        adjoint += parent_adj / (arg.get_result() * base.ln());
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Cdf(id, arg_id, _res, adj) => {
+                                Operation::Cdf(_, arg_id, _, _) => {
                                     // arg_ = parent_ * Dparent / Darg = parent_ * pdf(x)
                                     if let Some(arg) = self.record.get(arg_id) {
-                                        let arg = get_res_from_operation(arg);
-
                                         let norm = Normal::new(0.0, 1.0).unwrap();
-
-                                        adjoint += adj * norm.pdf(arg);
+                                        adjoint += parent_adj * norm.pdf(arg.get_result());
                                         println!(
                                             "node with id {} has adjoint {}. ParentId: {}",
-                                            node_id, adjoint, id
+                                            node_id, adjoint, parent_id
                                         );
                                     }
                                 }
-                                Operation::Value(id, _res, adj) => {
-                                    adjoint += adj;
+                                Operation::Value(_, _, _) => {
+                                    adjoint += parent_adj;
                                     println!(
                                         "node with id {} has adjoint {}. ParentId: {}",
-                                        node_id, adjoint, id
+                                        node_id, adjoint, parent_id
                                     );
                                 }
                             };
@@ -326,21 +280,7 @@ impl AutomaticDifferentiator {
 
             // update adjoint of record with node_id
             if let Some(node) = self.record.get_mut(node_map_entry) {
-                match node {
-                    Operation::Add(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
-                    Operation::Sub(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
-                    Operation::Mul(_id, _lhs_id, _rhs_id, _res, adj) => *adj += adjoint,
-                    Operation::Div(_id, _num_id, _den_id, _res, adj) => *adj += adjoint,
-                    Operation::Ln(_id, _arg_id, _res, adj) => *adj += adjoint,
-                    Operation::Sin(_id, _arg_id, _res, adj) => *adj += adjoint,
-                    Operation::Cos(_id, _arg_id, _res, adj) => *adj += adjoint,
-                    Operation::Exp(_id, _arg_id, _res, adj) => *adj += adjoint,
-                    Operation::Pow(_id, _base_id, _exp, _res, adj) => *adj += adjoint,
-                    Operation::Sqrt(_id, _arg_id, _res, adj) => *adj += adjoint,
-                    Operation::Log(_id, _arg_id, _base, _res, adj) => *adj += adjoint,
-                    Operation::Cdf(_id, _arg_id, _res, adj) => *adj += adjoint,
-                    Operation::Value(_id, _res, adj) => *adj += adjoint,
-                };
+                node.add_adjoint(adjoint);
             }
         }
     }
@@ -414,20 +354,3 @@ impl AutomaticDifferentiator {
     }
 }
 
-fn get_res_from_operation(op: &Operation) -> f64 {
-    match op {
-        Operation::Add(_, _, _, res, _) => *res,
-        Operation::Sub(_, _, _, res, _) => *res,
-        Operation::Mul(_, _, _, res, _) => *res,
-        Operation::Div(_, _, _, res, _) => *res,
-        Operation::Ln(_, _, res, _) => *res,
-        Operation::Sin(_, _, res, _) => *res,
-        Operation::Cos(_, _, res, _) => *res,
-        Operation::Exp(_, _, res, _) => *res,
-        Operation::Pow(_, _, _, res, _) => *res,
-        Operation::Sqrt(_, _, res, _) => *res,
-        Operation::Log(_, _, _, res, _) => *res,
-        Operation::Cdf(_, _, res, _) => *res,
-        Operation::Value(_, res, _) => *res,
-    }
-}

@@ -129,6 +129,98 @@ impl Display for Operation {
 }
 
 impl Operation {
+    pub fn get_id(&self) -> i64 {
+        match self {
+            Operation::Add(id, _, _, _, _)
+            | Operation::Sub(id, _, _, _, _)
+            | Operation::Mul(id, _, _, _, _)
+            | Operation::Div(id, _, _, _, _)
+            | Operation::Ln(id, _, _, _)
+            | Operation::Sin(id, _, _, _)
+            | Operation::Cos(id, _, _, _)
+            | Operation::Exp(id, _, _, _)
+            | Operation::Pow(id, _, _, _, _)
+            | Operation::Sqrt(id, _, _, _)
+            | Operation::Log(id, _, _, _, _)
+            | Operation::Cdf(id, _, _, _)
+            | Operation::Value(id, _, _) => *id,
+        }
+    }
+
+    pub fn get_result(&self) -> f64 {
+        match self {
+            Operation::Add(_, _, _, res, _)
+            | Operation::Sub(_, _, _, res, _)
+            | Operation::Mul(_, _, _, res, _)
+            | Operation::Div(_, _, _, res, _)
+            | Operation::Ln(_, _, res, _)
+            | Operation::Sin(_, _, res, _)
+            | Operation::Cos(_, _, res, _)
+            | Operation::Exp(_, _, res, _)
+            | Operation::Pow(_, _, _, res, _)
+            | Operation::Sqrt(_, _, res, _)
+            | Operation::Log(_, _, _, res, _)
+            | Operation::Cdf(_, _, res, _)
+            | Operation::Value(_, res, _) => *res,
+        }
+    }
+
+    pub fn get_adjoint(&self) -> f64 {
+        match self {
+            Operation::Add(_, _, _, _, adj)
+            | Operation::Sub(_, _, _, _, adj)
+            | Operation::Mul(_, _, _, _, adj)
+            | Operation::Div(_, _, _, _, adj)
+            | Operation::Ln(_, _, _, adj)
+            | Operation::Sin(_, _, _, adj)
+            | Operation::Cos(_, _, _, adj)
+            | Operation::Exp(_, _, _, adj)
+            | Operation::Pow(_, _, _, _, adj)
+            | Operation::Sqrt(_, _, _, adj)
+            | Operation::Log(_, _, _, _, adj)
+            | Operation::Cdf(_, _, _, adj)
+            | Operation::Value(_, _, adj) => *adj,
+        }
+    }
+
+    pub fn set_adjoint(&mut self, val: f64) {
+        match self {
+            Operation::Add(_, _, _, _, adj)
+            | Operation::Sub(_, _, _, _, adj)
+            | Operation::Mul(_, _, _, _, adj)
+            | Operation::Div(_, _, _, _, adj)
+            | Operation::Ln(_, _, _, adj)
+            | Operation::Sin(_, _, _, adj)
+            | Operation::Cos(_, _, _, adj)
+            | Operation::Exp(_, _, _, adj)
+            | Operation::Pow(_, _, _, _, adj)
+            | Operation::Sqrt(_, _, _, adj)
+            | Operation::Log(_, _, _, _, adj)
+            | Operation::Cdf(_, _, _, adj)
+            | Operation::Value(_, _, adj) => *adj = val,
+        }
+    }
+
+    pub fn add_adjoint(&mut self, val: f64) {
+        match self {
+            Operation::Add(_, _, _, _, adj)
+            | Operation::Sub(_, _, _, _, adj)
+            | Operation::Mul(_, _, _, _, adj)
+            | Operation::Div(_, _, _, _, adj)
+            | Operation::Ln(_, _, _, adj)
+            | Operation::Sin(_, _, _, adj)
+            | Operation::Cos(_, _, _, adj)
+            | Operation::Exp(_, _, _, adj)
+            | Operation::Pow(_, _, _, _, adj)
+            | Operation::Sqrt(_, _, _, adj)
+            | Operation::Log(_, _, _, _, adj)
+            | Operation::Cdf(_, _, _, adj)
+            | Operation::Value(_, _, adj) => *adj += val,
+        }
+    }
+}
+
+impl Operation {
     pub fn get_graph_string(&self) -> String {
         match self {
             Operation::Add(id, _lhs_id, _rhs_id, result, adjoint) => {

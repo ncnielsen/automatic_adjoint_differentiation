@@ -3,3 +3,5 @@ mod global_counter;
 pub mod number;
 pub mod operation;
 mod shared_data_communication_channel;
+
+pub use number::no_tape;

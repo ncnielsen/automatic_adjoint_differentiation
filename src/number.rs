@@ -1,5 +1,6 @@
 use crate::operation::Operation;
 use statrs::distribution::{ContinuousCDF, Normal};
+use std::cell::Cell;
 use std::fmt;
 use std::fmt::Display;
 use std::ops::Add;
@@ -10,6 +11,48 @@ use std::ops::Sub;
 use crate::global_counter::OPERATION_ID_COUNTER;
 use crate::shared_data_communication_channel;
 
+thread_local! {
+    /// When `false`, all `Number` arithmetic skips tape recording and runs as
+    /// plain f64.  Set via [`no_tape`].
+    static RECORDING: Cell<bool> = Cell::new(true);
+}
+
+/// Run `f` with the AAD tape disabled for the current thread.
+///
+/// Inside the closure every `Number` arithmetic operation computes only the
+/// primal `result` value — no operation nodes are pushed onto the tape, no
+/// mutexes are acquired.  This gives the same speed as plain `f64` arithmetic
+/// while keeping all call sites unchanged.
+///
+/// The tape is re-enabled when the closure returns (even if it panics).
+///
+/// # Example
+/// ```ignore
+/// let residual = aad::no_tape(|| einstein_residual(...));
+/// // residual.components[i].result is valid; gradients are not.
+/// ```
+pub fn no_tape<F, T>(f: F) -> T
+where
+    F: FnOnce() -> T,
+{
+    RECORDING.with(|r| r.set(false));
+    // Use a guard so the flag is restored even on panic.
+    struct Guard;
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            RECORDING.with(|r| r.set(true));
+        }
+    }
+    let _guard = Guard;
+    f()
+}
+
+/// Returns `true` if tape recording is active on the current thread.
+#[inline]
+fn recording() -> bool {
+    RECORDING.with(|r| r.get())
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Number {
     pub result: f64,
@@ -19,6 +62,9 @@ pub struct Number {
 
 impl Number {
     pub fn new(val: f64) -> Self {
+        if !recording() {
+            return Number { result: val, id: 0, leaf: false };
+        }
         let id = OPERATION_ID_COUNTER.inc();
         Number {
             result: val,
@@ -28,6 +74,8 @@ impl Number {
     }
 
     fn new_non_leaf(val: f64) -> Self {
+        // new_non_leaf is only called from arithmetic ops, which already
+        // guard on recording(); no extra check needed here.
         let id = OPERATION_ID_COUNTER.inc();
         Number {
             result: val,
@@ -41,6 +89,9 @@ impl Add for Number {
     type Output = Number;
 
     fn add(self, rhs: Self) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result + rhs.result, id: 0, leaf: false };
+        }
         let result: Number = Number::new_non_leaf(self.result + rhs.result);
         let op = Operation::Add(result.id, self.id, rhs.id, result.result, 0.0);
         shared_data_communication_channel::global_register_operation(op);
@@ -90,6 +141,9 @@ impl Sub for Number {
     type Output = Number;
 
     fn sub(self, rhs: Self) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result - rhs.result, id: 0, leaf: false };
+        }
         let result: Number = Number::new_non_leaf(self.result - rhs.result);
         let op = Operation::Sub(result.id, self.id, rhs.id, result.result, 0.0);
         shared_data_communication_channel::global_register_operation(op);
@@ -139,6 +193,9 @@ impl Mul for Number {
     type Output = Number;
 
     fn mul(self, rhs: Self) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result * rhs.result, id: 0, leaf: false };
+        }
         let result: Number = Number::new_non_leaf(self.result * rhs.result);
         let op = Operation::Mul(result.id, self.id, rhs.id, result.result, 0.0);
         shared_data_communication_channel::global_register_operation(op);
@@ -188,6 +245,9 @@ impl Div for Number {
     type Output = Number;
 
     fn div(self, rhs: Self) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result / rhs.result, id: 0, leaf: false };
+        }
         let result: Number = Number::new_non_leaf(self.result / rhs.result);
         let op = Operation::Div(result.id, self.id, rhs.id, result.result, 0.0);
         shared_data_communication_channel::global_register_operation(op);

@@ -116,6 +116,9 @@ impl Add<f64> for Number {
     type Output = Number;
 
     fn add(self, rhs: f64) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result + rhs, id: 0, leaf: false };
+        }
         // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
@@ -128,6 +131,9 @@ impl Add<Number> for f64 {
     type Output = Number;
 
     fn add(self, rhs: Number) -> Self::Output {
+        if !recording() {
+            return Number { result: self + rhs.result, id: 0, leaf: false };
+        }
         // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
@@ -169,6 +175,9 @@ impl Sub<f64> for Number {
     type Output = Number;
 
     fn sub(self, rhs: f64) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result - rhs, id: 0, leaf: false };
+        }
         // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
@@ -181,6 +190,9 @@ impl Sub<Number> for f64 {
     type Output = Number;
 
     fn sub(self, rhs: Number) -> Self::Output {
+        if !recording() {
+            return Number { result: self - rhs.result, id: 0, leaf: false };
+        }
         // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
@@ -221,6 +233,9 @@ impl Mul<f64> for Number {
     type Output = Number;
 
     fn mul(self, rhs: f64) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result * rhs, id: 0, leaf: false };
+        }
         // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
@@ -233,6 +248,9 @@ impl Mul<Number> for f64 {
     type Output = Number;
 
     fn mul(self, rhs: Number) -> Self::Output {
+        if !recording() {
+            return Number { result: self * rhs.result, id: 0, leaf: false };
+        }
         // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
@@ -274,6 +292,9 @@ impl Div<f64> for Number {
     type Output = Number;
 
     fn div(self, rhs: f64) -> Self::Output {
+        if !recording() {
+            return Number { result: self.result / rhs, id: 0, leaf: false };
+        }
         // since rhs is an f64, no Number exists for it, so create a Number and call the Number version
         let rhs = Number::new_non_leaf(rhs);
         let val_op = Operation::Value(rhs.id, rhs.result, 0.0);
@@ -286,6 +307,9 @@ impl Div<Number> for f64 {
     type Output = Number;
 
     fn div(self, rhs: Number) -> Self::Output {
+        if !recording() {
+            return Number { result: self / rhs.result, id: 0, leaf: false };
+        }
         // since lhs is an f64, no Number exists for it, so create a Number and call the Number version
         let lhs = Number::new_non_leaf(self);
         let val_op = Operation::Value(lhs.id, lhs.result, 0.0);
